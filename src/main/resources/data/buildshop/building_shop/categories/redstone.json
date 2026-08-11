@@ -1,0 +1,7 @@
+{
+  "id": "redstone",
+  "name": "红石",
+  "icon": "minecraft:redstone",
+  "sort": 90,
+  "enabled": true
+}

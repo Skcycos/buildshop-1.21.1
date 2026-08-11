@@ -1,0 +1,13 @@
+{
+  "id": "oak_planks",
+  "item": "minecraft:oak_planks",
+  "categories": ["wood", "building"],
+  "currency": "virtual_coins",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "橡木板",
+  "description": "常用的基础建筑材料",
+  "enabled": true,
+  "sort": 10
+}

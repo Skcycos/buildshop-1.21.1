@@ -1,0 +1,13 @@
+{
+  "id": "oak_fence_gate",
+  "item": "minecraft:oak_fence_gate",
+  "categories": ["fence_gate", "wood"],
+  "currency": "virtual_coins",
+  "unitPrice": 5,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "橡木栅栏门",
+  "description": "进出小院的门",
+  "enabled": true,
+  "sort": 20
+}

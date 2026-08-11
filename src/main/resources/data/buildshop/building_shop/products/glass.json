@@ -1,0 +1,13 @@
+{
+  "id": "glass",
+  "item": "minecraft:glass",
+  "categories": ["glass"],
+  "currency": "virtual_coins",
+  "unitPrice": 5,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "玻璃",
+  "description": "通透采光必备",
+  "enabled": true,
+  "sort": 10
+}

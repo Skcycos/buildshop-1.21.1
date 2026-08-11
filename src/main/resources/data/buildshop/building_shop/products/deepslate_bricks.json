@@ -1,0 +1,13 @@
+{
+  "id": "deepslate_bricks",
+  "item": "minecraft:deepslate_bricks",
+  "categories": ["stone", "building"],
+  "currency": "virtual_coins",
+  "unitPrice": 6,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深板岩砖",
+  "description": "深色现代风格建材",
+  "enabled": true,
+  "sort": 40
+}

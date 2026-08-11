@@ -1,0 +1,18 @@
+package com.tanrunn.buildshop.core;
+
+/** 购买失败原因（成功时为 null）。 */
+public enum PurchaseFailure {
+    PRODUCT_NOT_FOUND,
+    PRODUCT_DISABLED,
+    INVALID_ITEM,
+    INVALID_QUANTITY,
+    INSUFFICIENT_STOCK,
+    INSUFFICIENT_BALANCE,
+    INSUFFICIENT_INVENTORY,
+    NO_CURRENCY_PROVIDER,
+    WITHDRAW_FAILED,
+    DELIVERY_FAILED,
+    RATE_LIMITED,
+    PRICE_OVERFLOW,
+    UNKNOWN
+}

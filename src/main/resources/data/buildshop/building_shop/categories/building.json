@@ -1,0 +1,7 @@
+{
+  "id": "building",
+  "name": "建筑方块",
+  "icon": "minecraft:bricks",
+  "sort": 30,
+  "enabled": true
+}

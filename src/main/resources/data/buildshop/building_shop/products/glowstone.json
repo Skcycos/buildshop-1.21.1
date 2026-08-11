@@ -1,0 +1,13 @@
+{
+  "id": "glowstone",
+  "item": "minecraft:glowstone",
+  "categories": ["light"],
+  "currency": "virtual_coins",
+  "unitPrice": 30,
+  "bulkSize": 64,
+  "stock": { "mode": "finite", "quantity": 2000 },
+  "displayName": "荧石",
+  "description": "柔和稳定的人工光源（有限库存示例）",
+  "enabled": true,
+  "sort": 10
+}

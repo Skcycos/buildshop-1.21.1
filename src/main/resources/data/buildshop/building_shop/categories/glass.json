@@ -1,0 +1,7 @@
+{
+  "id": "glass",
+  "name": "玻璃",
+  "icon": "minecraft:glass",
+  "sort": 40,
+  "enabled": true
+}

@@ -1,0 +1,13 @@
+{
+  "id": "redstone_torch",
+  "item": "minecraft:redstone_torch",
+  "categories": ["redstone", "light"],
+  "currency": "virtual_coins",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红石火把",
+  "description": "最便宜的信号源",
+  "enabled": true,
+  "sort": 10
+}

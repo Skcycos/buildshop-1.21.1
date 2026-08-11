@@ -1,0 +1,7 @@
+{
+  "id": "decoration",
+  "name": "装饰",
+  "icon": "minecraft:bookshelf",
+  "sort": 60,
+  "enabled": true
+}

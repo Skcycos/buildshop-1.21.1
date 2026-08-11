@@ -1,0 +1,13 @@
+{
+  "id": "bookshelf",
+  "item": "minecraft:bookshelf",
+  "categories": ["decoration"],
+  "currency": "virtual_coins",
+  "unitPrice": 15,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "书架",
+  "description": "图书馆与书房必备",
+  "enabled": true,
+  "sort": 10
+}

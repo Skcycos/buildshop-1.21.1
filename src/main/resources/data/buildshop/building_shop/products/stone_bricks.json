@@ -1,0 +1,13 @@
+{
+  "id": "stone_bricks",
+  "item": "minecraft:stone_bricks",
+  "categories": ["stone", "building"],
+  "currency": "virtual_coins",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "石砖",
+  "description": "规整耐看的中世纪建材",
+  "enabled": true,
+  "sort": 30
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ladder",
+  "item": "minecraft:ladder",
+  "categories": ["other"],
+  "currency": "virtual_coins",
+  "unitPrice": 1,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "梯子",
+  "description": "竖直交通的好帮手",
+  "enabled": true,
+  "sort": 10
+}

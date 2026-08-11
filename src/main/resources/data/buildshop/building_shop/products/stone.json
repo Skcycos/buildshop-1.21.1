@@ -1,0 +1,13 @@
+{
+  "id": "stone",
+  "item": "minecraft:stone",
+  "categories": ["stone", "building"],
+  "currency": "virtual_coins",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "石头",
+  "description": "最基础的建筑方块",
+  "enabled": true,
+  "sort": 10
+}

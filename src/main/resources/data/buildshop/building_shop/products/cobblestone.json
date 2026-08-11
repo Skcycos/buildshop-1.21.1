@@ -1,0 +1,13 @@
+{
+  "id": "cobblestone",
+  "item": "minecraft:cobblestone",
+  "categories": ["stone", "building"],
+  "currency": "virtual_coins",
+  "unitPrice": 1,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "圆石",
+  "description": "挖矿路上最常见的材料",
+  "enabled": true,
+  "sort": 20
+}

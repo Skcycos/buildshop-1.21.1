@@ -1,0 +1,13 @@
+{
+  "id": "repeater",
+  "item": "minecraft:repeater",
+  "categories": ["redstone"],
+  "currency": "virtual_coins",
+  "unitPrice": 10,
+  "bulkSize": 16,
+  "stock": { "mode": "infinite" },
+  "displayName": "红石中继器",
+  "description": "信号延时与中继",
+  "enabled": true,
+  "sort": 30
+}

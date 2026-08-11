@@ -1,0 +1,7 @@
+{
+  "id": "fence_gate",
+  "name": "栅栏与门",
+  "icon": "minecraft:oak_fence",
+  "sort": 70,
+  "enabled": true
+}

@@ -1,0 +1,7 @@
+{
+  "id": "light",
+  "name": "光源",
+  "icon": "minecraft:glowstone",
+  "sort": 50,
+  "enabled": true
+}

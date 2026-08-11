@@ -1,0 +1,13 @@
+{
+  "id": "stone_brick_slab",
+  "item": "minecraft:stone_brick_slab",
+  "categories": ["stairs_slabs", "stone"],
+  "currency": "virtual_coins",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "石砖台阶",
+  "description": "地板与楼梯的细节件",
+  "enabled": true,
+  "sort": 20
+}

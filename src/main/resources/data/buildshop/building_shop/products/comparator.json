@@ -1,0 +1,13 @@
+{
+  "id": "comparator",
+  "item": "minecraft:comparator",
+  "categories": ["redstone"],
+  "currency": "virtual_coins",
+  "unitPrice": 12,
+  "bulkSize": 16,
+  "stock": { "mode": "finite", "quantity": 500 },
+  "displayName": "红石比较器",
+  "description": "信号比较与减法（有限库存示例）",
+  "enabled": true,
+  "sort": 20
+}

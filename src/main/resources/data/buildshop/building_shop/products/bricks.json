@@ -1,0 +1,13 @@
+{
+  "id": "bricks",
+  "item": "minecraft:bricks",
+  "categories": ["building"],
+  "currency": "items:minecraft:emerald",
+  "unitPrice": 1,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红砖",
+  "description": "用绿宝石支付的建材（物品货币示例）",
+  "enabled": true,
+  "sort": 50
+}

@@ -1,0 +1,7 @@
+{
+  "id": "other",
+  "name": "其他",
+  "icon": "minecraft:ladder",
+  "sort": 100,
+  "enabled": true
+}

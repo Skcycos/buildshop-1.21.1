@@ -1,0 +1,13 @@
+{
+  "id": "scaffolding",
+  "item": "minecraft:scaffolding",
+  "categories": ["other"],
+  "currency": "virtual_coins",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "脚手架",
+  "description": "高空作业的安全平台",
+  "enabled": true,
+  "sort": 20
+}

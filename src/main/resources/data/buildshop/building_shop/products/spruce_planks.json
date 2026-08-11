@@ -1,0 +1,13 @@
+{
+  "id": "spruce_planks",
+  "item": "minecraft:spruce_planks",
+  "categories": ["wood", "building"],
+  "currency": "virtual_coins",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "云杉木板",
+  "description": "色调偏深的常用木板",
+  "enabled": true,
+  "sort": 20
+}

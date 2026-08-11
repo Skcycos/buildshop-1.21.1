@@ -1,0 +1,7 @@
+{
+  "id": "stone",
+  "name": "石材",
+  "icon": "minecraft:stone",
+  "sort": 10,
+  "enabled": true
+}

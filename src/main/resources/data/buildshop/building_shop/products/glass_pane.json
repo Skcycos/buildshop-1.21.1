@@ -1,0 +1,13 @@
+{
+  "id": "glass_pane",
+  "item": "minecraft:glass_pane",
+  "categories": ["glass"],
+  "currency": "virtual_coins",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "玻璃板",
+  "description": "窗户与隔断常用",
+  "enabled": true,
+  "sort": 20
+}

@@ -1,0 +1,13 @@
+{
+  "id": "flower_pot",
+  "item": "minecraft:flower_pot",
+  "categories": ["decoration"],
+  "currency": "virtual_coins",
+  "unitPrice": 8,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "花盆",
+  "description": "小小的绿色点缀",
+  "enabled": true,
+  "sort": 20
+}

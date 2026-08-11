@@ -1,0 +1,13 @@
+{
+  "id": "oak_fence",
+  "item": "minecraft:oak_fence",
+  "categories": ["fence_gate", "wood"],
+  "currency": "virtual_coins",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "橡木栅栏",
+  "description": "围栏与走道装饰",
+  "enabled": true,
+  "sort": 10
+}

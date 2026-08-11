@@ -1,0 +1,831 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="aui-font-mode" content="web">
+    <meta name="aui-viewport" content="mode=browser">
+    <meta name="aui-mouse-events" content="intercept">
+    <title>营造司 · 建材库</title>
+    <style>
+        :root {
+            --paper: #f3ecdf;
+            --paper-light: #fbf8f0;
+            --paper-deep: #e8ddca;
+            --paper-line: #d6c8b1;
+            --ink: #303832;
+            --ink-muted: #77766d;
+            --ink-light: #9b988d;
+            --jade: #3f6d60;
+            --jade-dark: #2d5147;
+            --jade-soft: #e4eee8;
+            --cinnabar: #a84f42;
+            --cinnabar-dark: #883b32;
+            --cinnabar-soft: #f2ded8;
+            --gold: #ad7b28;
+            --gold-soft: #f4e9cc;
+            --white: #fffdf8;
+            --shadow: rgba(75, 56, 33, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        body {
+            color: var(--ink);
+            background:
+                linear-gradient(90deg, rgba(120, 92, 50, 0.035) 1px, transparent 1px) 0 0 / 22px 22px,
+                linear-gradient(rgba(120, 92, 50, 0.028) 1px, transparent 1px) 0 0 / 22px 22px,
+                var(--paper);
+            font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun",
+                         "Microsoft YaHei", sans-serif;
+            font-size: 14px;
+        }
+
+        .building-shop {
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .shop-shell {
+            width: min(1440px, 100%);
+            height: 100%;
+            min-height: 0;
+            margin: 0 auto;
+            padding: 24px 28px 26px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .masthead {
+            display: grid;
+            grid-template-columns: minmax(270px, 1.1fr) minmax(190px, 0.65fr) minmax(260px, 1fr) auto;
+            align-items: stretch;
+            gap: 14px;
+            flex: 0 0 auto;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--paper-line);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            padding: 4px 0;
+        }
+
+        .brand-mark {
+            position: relative;
+            display: grid;
+            place-items: center;
+            width: 58px;
+            height: 58px;
+            flex: 0 0 58px;
+            color: #fff9ed;
+            background: var(--cinnabar);
+            border: 3px solid var(--cinnabar-dark);
+            box-shadow: 4px 4px 0 rgba(136, 59, 50, 0.18);
+            font-size: 29px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .brand-mark::after {
+            content: "";
+            position: absolute;
+            inset: 5px;
+            border: 1px solid rgba(255, 249, 237, 0.65);
+        }
+
+        .brand-copy { min-width: 0; }
+
+        .eyebrow,
+        .section-kicker,
+        .side-kicker {
+            margin: 0 0 5px;
+            color: var(--cinnabar);
+            font-family: "Microsoft YaHei", sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .brand-title {
+            margin: 0;
+            color: var(--jade-dark);
+            font-size: 27px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            white-space: nowrap;
+        }
+
+        .brand-subtitle {
+            margin: 5px 0 0;
+            color: var(--ink-muted);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .balance-card,
+        .search-card,
+        .side-panel,
+        .toolbar,
+        .shortcut-bar,
+        .dialog {
+            border: 1px solid var(--paper-line);
+            background: var(--white);
+            box-shadow: 4px 4px 0 var(--shadow);
+        }
+
+        .balance-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+            padding: 12px 15px;
+            border-left: 4px solid var(--jade);
+        }
+
+        .balance-card .label {
+            color: var(--ink-muted);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .balance-value {
+            display: flex;
+            align-items: baseline;
+            gap: 7px;
+            margin-top: 3px;
+        }
+
+        .balance-value #balance {
+            color: var(--cinnabar);
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .balance-value .unit {
+            color: var(--ink-light);
+            font-size: 11px;
+        }
+
+        .search-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            padding: 10px 14px;
+        }
+
+        .search-label {
+            color: var(--ink-muted);
+            font-family: "Microsoft YaHei", sans-serif;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .search {
+            width: 100%;
+            min-height: 31px;
+            padding: 4px 0;
+            color: var(--ink);
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid var(--paper-line);
+            outline: none;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .search:focus { border-bottom-color: var(--cinnabar); }
+        .search::placeholder { color: var(--ink-light); }
+
+        .refresh-button {
+            align-self: center;
+            min-width: 78px;
+            height: 42px;
+            padding: 0 15px;
+            color: #fffaf0;
+            background: var(--jade);
+            border: 1px solid var(--jade-dark);
+            box-shadow: 3px 3px 0 rgba(45, 81, 71, 0.2);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .refresh-button:hover { background: var(--jade-dark); }
+        .refresh-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(45, 81, 71, 0.2); }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            gap: 18px;
+            flex: 1 1 auto;
+            min-height: 0;
+            margin-top: 14px;
+            overflow: visible;
+        }
+
+        .sidebar {
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            overflow: visible;
+        }
+
+        .side-panel {
+            position: relative;
+            height: 100%;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px 13px 15px;
+            border-top: 0;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+        }
+
+        .side-title {
+            margin: 0;
+            color: var(--jade-dark);
+            font-size: 20px;
+            letter-spacing: 2px;
+        }
+
+        .side-description {
+            margin: 6px 0 15px;
+            color: var(--ink-muted);
+            font-size: 12px;
+            line-height: 1.65;
+        }
+
+        .side-rule {
+            height: 1px;
+            margin: 0 0 10px;
+            background: linear-gradient(90deg, var(--cinnabar), transparent);
+        }
+
+        #categories {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .cat {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-height: 40px;
+            padding: 7px 9px;
+            color: var(--ink-muted);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 0.12s, border-color 0.12s, color 0.12s;
+        }
+
+        .cat:hover {
+            color: var(--jade-dark);
+            background: var(--jade-soft);
+            border-color: #bfd5c8;
+        }
+
+        .cat.active {
+            color: var(--jade-dark);
+            background: var(--jade-soft);
+            border-color: #a9c7b7;
+            box-shadow: inset 3px 0 0 var(--cinnabar);
+            font-weight: 700;
+        }
+
+        .cat-icon {
+            width: 24px;
+            height: 24px;
+            flex: 0 0 24px;
+        }
+
+        .cat-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        .side-foot {
+            margin: 15px 3px 0;
+            padding-top: 11px;
+            color: var(--ink-light);
+            border-top: 1px dashed var(--paper-line);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            overflow: visible;
+        }
+
+        .toolbar {
+            position: relative;
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            flex: 0 0 auto;
+            padding: 13px 17px 12px;
+            border-top: 7px solid var(--cinnabar);
+            box-shadow: 4px 4px 0 var(--shadow);
+        }
+
+        .toolbar-copy {
+            min-width: 0;
+        }
+
+        .side-panel {
+            border-top: 7px solid var(--cinnabar);
+            box-shadow: 4px 4px 0 var(--shadow);
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--jade-dark);
+            font-size: 23px;
+            letter-spacing: 2px;
+        }
+
+        #product-count {
+            display: inline-block;
+            margin-top: 5px;
+            color: var(--ink-muted);
+            font-size: 12px;
+        }
+
+        .sort-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .sort-btn {
+            padding: 7px 11px;
+            color: var(--ink-muted);
+            background: var(--paper-light);
+            border: 1px solid var(--paper-line);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .sort-btn:hover { color: var(--jade-dark); border-color: #9eb9a9; }
+
+        .sort-btn.active {
+            color: #fffaf0;
+            background: var(--jade);
+            border-color: var(--jade-dark);
+            font-weight: 700;
+        }
+
+        .shortcut-bar {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0;
+            flex: 0 0 auto;
+            min-height: 36px;
+            margin-top: 8px;
+            padding: 0;
+            background: var(--paper-deep);
+            box-shadow: none;
+        }
+
+        .shortcut {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 0;
+            min-height: 36px;
+            padding: 5px 8px;
+            color: var(--ink-muted);
+            border-right: 1px solid var(--paper-line);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .shortcut:last-child { border-right: 0; }
+
+        .shortcut kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            min-width: 38px;
+            min-height: 22px;
+            padding: 3px 6px;
+            color: var(--cinnabar-dark);
+            background: var(--cinnabar-soft);
+            border: 1px solid #ddb5ab;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .shortcut-label {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+            gap: 8px;
+            flex: 1 1 auto;
+            min-height: 0;
+            margin-top: 10px;
+            padding: 1px 1px 14px;
+            align-content: start;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+        }
+
+        .card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 168px;
+            min-height: 168px;
+            padding: 7px 8px 7px;
+            overflow: hidden;
+            color: var(--ink);
+            background: var(--white);
+            border: 1px solid var(--paper-line);
+            border-top: 3px solid var(--jade);
+            box-shadow: 3px 3px 0 var(--shadow);
+            cursor: pointer;
+            transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            border-top: 1px solid rgba(168, 79, 66, 0.5);
+            border-right: 1px solid rgba(168, 79, 66, 0.5);
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: #9eb9a9;
+            box-shadow: 4px 5px 0 rgba(75, 56, 33, 0.15);
+        }
+
+        .card:active { transform: translate(1px, 1px); }
+        .card.disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .card-icon {
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 1px auto 5px;
+            transform: scale(2);
+            transform-origin: center;
+        }
+
+        .card-name {
+            height: 21px;
+            min-height: 0;
+            overflow: hidden;
+            color: var(--jade-dark);
+            font-size: 14px;
+            font-weight: 700;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: 1px;
+        }
+
+        .card-desc {
+            height: 27px;
+            min-height: 0;
+            margin-top: 2px;
+            overflow: hidden;
+            color: var(--ink-muted);
+            font-size: 11px;
+            line-height: 1.55;
+            text-align: center;
+        }
+
+        .card-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: auto;
+            padding: 5px 6px 4px;
+            background: var(--gold-soft);
+            border-top: 1px solid #e3d3ad;
+            font-size: 11px;
+        }
+
+        .card-price {
+            color: var(--cinnabar-dark);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .card-stock { color: var(--jade); text-align: right; }
+        .card-stock.low { color: var(--cinnabar); }
+
+        .card-state {
+            height: 14px;
+            min-height: 0;
+            margin-top: 3px;
+            color: var(--cinnabar);
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .empty {
+            grid-column: 1 / -1;
+            padding: 84px 20px;
+            color: var(--ink-light);
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .content-foot {
+            display: flex;
+            justify-content: flex-start;
+            flex: 0 0 auto;
+            gap: 12px;
+            color: var(--ink-light);
+            font-size: 11px;
+        }
+
+        /* The shortcut bar is the single source of truth for controls. */
+        .hint { display: none; }
+
+        .status {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            z-index: 100;
+            max-width: min(520px, calc(100vw - 40px));
+            padding: 10px 18px;
+            transform: translateX(-50%);
+            color: var(--jade-dark);
+            background: var(--jade-soft);
+            border: 1px solid #9eb9a9;
+            box-shadow: 3px 3px 0 var(--shadow);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status.error {
+            color: var(--cinnabar-dark);
+            background: var(--cinnabar-soft);
+            border-color: #d7a79d;
+        }
+
+        .status.success { color: var(--jade-dark); }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(48, 56, 50, 0.48);
+        }
+
+        .dialog {
+            width: min(420px, 100%);
+            padding: 22px;
+            border-top: 4px solid var(--cinnabar);
+        }
+
+        .dialog-kicker {
+            margin-bottom: 6px;
+            color: var(--cinnabar);
+            font-family: "Microsoft YaHei", sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .dialog-title {
+            color: var(--jade-dark);
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .dialog-unit {
+            margin-top: 5px;
+            color: var(--ink-muted);
+            font-size: 12px;
+        }
+
+        .dialog input {
+            width: 100%;
+            margin: 18px 0 10px;
+            padding: 10px 12px;
+            color: var(--ink);
+            background: var(--paper-light);
+            border: 1px solid var(--paper-line);
+            outline: none;
+            font-family: inherit;
+            font-size: 17px;
+        }
+
+        .dialog input:focus { border-color: var(--cinnabar); }
+
+        .dialog-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 8px 0;
+            color: var(--ink-muted);
+            border-top: 1px dashed var(--paper-line);
+            font-size: 12px;
+        }
+
+        .dialog-row .value { color: var(--cinnabar-dark); font-weight: 700; }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .dialog-actions .btn {
+            min-width: 82px;
+            padding: 8px 14px;
+            color: var(--ink-muted);
+            background: var(--paper-light);
+            border: 1px solid var(--paper-line);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .dialog-actions .btn:hover { color: var(--jade-dark); border-color: #9eb9a9; }
+
+        .dialog-actions .btn.primary {
+            color: #fffaf0;
+            background: var(--cinnabar);
+            border-color: var(--cinnabar-dark);
+            font-weight: 700;
+        }
+
+        .dialog-actions .btn.primary:hover { background: var(--cinnabar-dark); }
+
+        .hidden { display: none; }
+
+        @media (max-width: 1040px) {
+            .masthead { grid-template-columns: 1fr 1fr; }
+            .brand { grid-column: 1 / -1; }
+            .refresh-button { align-self: stretch; height: auto; }
+        }
+
+        @media (max-width: 720px) {
+            .shop-shell { padding: 17px 14px; }
+            .layout { grid-template-columns: 1fr; }
+            .side-panel { position: static; }
+            #categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .toolbar { align-items: flex-start; flex-direction: column; }
+            .sort-buttons { justify-content: flex-start; }
+            .shortcut-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .shortcut:nth-child(2) { border-right: 0; }
+            .shortcut:nth-child(-n + 2) { border-bottom: 1px solid var(--paper-line); }
+            .content-foot { flex-direction: column; }
+            .hint { text-align: left; }
+        }
+
+        @media (max-width: 480px) {
+            .masthead { grid-template-columns: 1fr; }
+            .brand { grid-column: auto; }
+            .brand-title { font-size: 23px; }
+            .refresh-button { min-height: 40px; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="building-shop">
+    <div class="shop-shell">
+        <header class="masthead">
+            <div class="brand">
+                <div class="brand-mark">筑</div>
+                <div class="brand-copy">
+                    <p class="eyebrow">BUILDING MATERIALS · 01</p>
+                    <h1 class="brand-title">营造司 · 建材库</h1>
+                    <p class="brand-subtitle">为每一次落块，备好一份材料。</p>
+                </div>
+            </div>
+
+            <div class="balance-card">
+                <span class="label" id="balance-label">可用预算</span>
+                <div class="balance-value"><span id="balance">—</span><span class="unit">可支配</span></div>
+            </div>
+
+            <label class="search-card" for="search">
+                <span class="search-label">检索材料 / SEARCH MATERIAL</span>
+                <input id="search" class="search" type="search" placeholder="输入名称、用途或商品编号…">
+            </label>
+
+            <button id="refresh" class="refresh-button" type="button">↻ 刷新</button>
+        </header>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="side-panel">
+                    <p class="side-kicker">MATERIAL INDEX</p>
+                    <h2 class="side-title">材料谱</h2>
+                    <p class="side-description">按营造工序挑选材料。一个商品可以归入多个工种。</p>
+                    <div class="side-rule"></div>
+                    <div id="categories"></div>
+                    <p class="side-foot">库存与价格由服务器掌柜实时核定。缺货时请稍候补货。</p>
+                </div>
+            </aside>
+
+            <main class="content">
+                <div class="toolbar">
+                    <div class="toolbar-copy">
+                        <p class="section-kicker">THE ARCHITECT'S DEPOT</p>
+                        <h2 class="section-title">今日可用材料</h2>
+                        <span id="product-count"></span>
+                    </div>
+                    <div class="sort-buttons" id="sort-buttons">
+                        <button class="sort-btn active" data-sort="default" type="button">推荐顺序</button>
+                        <button class="sort-btn" data-sort="price_asc" type="button">价格低 → 高</button>
+                        <button class="sort-btn" data-sort="price_desc" type="button">价格高 → 低</button>
+                    </div>
+                </div>
+
+                <div class="shortcut-bar">
+                    <span class="shortcut"><kbd>左键</kbd><span class="shortcut-label">取 1 个</span></span>
+                    <span class="shortcut"><kbd>Shift</kbd><span class="shortcut-label">取一组</span></span>
+                    <span class="shortcut"><kbd>Ctrl</kbd><span class="shortcut-label">尽可能多</span></span>
+                    <span class="shortcut"><kbd>右键</kbd><span class="shortcut-label">自定义数量</span></span>
+                </div>
+
+                <div id="products" class="grid"></div>
+
+                <div class="content-foot">
+                    <span>营造司 · 物资调配处</span>
+                    <span id="hint"></span>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="status" class="status hidden"></div>
+
+    <div id="qty-dialog" class="overlay hidden">
+        <div class="dialog">
+            <div class="dialog-kicker">CUSTOM ALLOCATION</div>
+            <div class="dialog-title" id="qty-title">数量购买</div>
+            <div class="dialog-unit" id="qty-unit"></div>
+            <input id="qty-input" type="number" min="1" value="1">
+            <div class="dialog-row"><span>预计总价</span><span class="value" id="qty-total">—</span></div>
+            <div class="dialog-row"><span>预计占用背包</span><span class="value" id="qty-space">—</span></div>
+            <div class="dialog-actions">
+                <button id="qty-cancel" class="btn" type="button">取消</button>
+                <button id="qty-confirm" class="btn primary" type="button">确认调配</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "id": "oak_stairs",
+  "item": "minecraft:oak_stairs",
+  "categories": ["stairs_slabs", "wood"],
+  "currency": "virtual_coins",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "橡木楼梯",
+  "description": "木结构建筑的楼梯",
+  "enabled": true,
+  "sort": 30
+}

@@ -1,0 +1,13 @@
+{
+  "id": "cobblestone_wall",
+  "item": "minecraft:cobblestone_wall",
+  "categories": ["fence_gate", "stone"],
+  "currency": "virtual_coins",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "圆石墙",
+  "description": "粗犷的围墙选择",
+  "enabled": true,
+  "sort": 30
+}

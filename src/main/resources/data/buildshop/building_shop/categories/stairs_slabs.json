@@ -1,0 +1,7 @@
+{
+  "id": "stairs_slabs",
+  "name": "楼梯与台阶",
+  "icon": "minecraft:stone_brick_stairs",
+  "sort": 80,
+  "enabled": true
+}
