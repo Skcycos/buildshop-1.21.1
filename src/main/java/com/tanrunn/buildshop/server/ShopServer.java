@@ -11,45 +11,57 @@ import com.tanrunn.buildshop.core.ItemDispatcher;
 import com.tanrunn.buildshop.core.Product;
 import com.tanrunn.buildshop.core.ProductCatalog;
 import com.tanrunn.buildshop.core.PurchaseEngine;
+import com.tanrunn.buildshop.core.PurchaseFailure;
 import com.tanrunn.buildshop.core.PurchaseMode;
 import com.tanrunn.buildshop.core.PurchaseRequest;
 import com.tanrunn.buildshop.core.PurchaseResult;
 import com.tanrunn.buildshop.core.StockMode;
+import com.tanrunn.buildshop.core.StockReconciler;
 import com.tanrunn.buildshop.core.StockStore;
 import com.tanrunn.buildshop.core.Wallet;
 import com.tanrunn.buildshop.network.BuildShopNetwork;
 import com.tanrunn.buildshop.network.BuildShopNetwork.CategoryDto;
 import com.tanrunn.buildshop.network.BuildShopNetwork.ProductDto;
-import com.tanrunn.buildshop.network.BuildShopNetwork.SyncShopPayload;
+import com.tanrunn.buildshop.network.BuildShopNetwork;
 import com.tanrunn.buildshop.network.BuildShopNetwork.PurchaseResultPayload;
-import com.mojang.serialization.JsonOps;
+import com.tanrunn.buildshop.network.BuildShopNetwork.SyncShopPayload;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * 商店服务端门面：目录/库存/幂等/购买事务/状态同步。
+ * 商店服务端核心：目录、库存、购买事务、同步。
  *
- * <p>所有方法必须在服务端主线程调用。</p>
+ * <p>所有库存/余额变更都在服务端主线程完成（网络包经 {@code enqueueWork} 转入主线程，
+ * 数据包 reload 的 apply 阶段也在主线程执行）。</p>
  */
 public final class ShopServer {
 
     public static final ShopServer INSTANCE = new ShopServer();
+
+    /** requestId 安全长度上限（网络层同步限制，防御超长字符串）。 */
+    public static final int MAX_REQUEST_ID_LENGTH = 64;
 
     private final CatalogStore catalogStore = new CatalogStore();
     private final StockStore stockStore = new StockStore();
@@ -70,7 +82,7 @@ public final class ShopServer {
     }
 
     public ShopSavedData dataOf(ServerPlayer player) {
-        return ShopSavedData.get(player.serverLevel());
+        return player == null ? null : ShopSavedData.get(player.serverLevel());
     }
 
     public ShopSavedData dataOf(ServerLevel level) {
@@ -79,7 +91,8 @@ public final class ShopServer {
 
     /** 管理员改库存：同时更新持久化数据与运行中的库存快照。 */
     public void updateStock(ServerLevel level, String productId, int quantity) {
-        dataOf(level).setStock(productId, quantity);
+        ShopSavedData data = dataOf(level);
+        data.setStock(productId, quantity);
         stockStore.set(productId, quantity);
     }
 
@@ -88,85 +101,158 @@ public final class ShopServer {
         catalogStore.set(fresh);
     }
 
-    /** 数据包重载：换新目录、保留运行中库存、重新初始化新增有限库存商品。 */
-    public void onCatalogReload(ProductCatalog fresh, ServerLevel level) {
+    /**
+     * 服务器启动完成：把已加载目录原子应用到 overworld SavedData 与运行时 StockStore。
+     * 修复首次启动时目录已加载但有限库存从未初始化的问题。
+     */
+    public void onServerStarted(MinecraftServer server) {
+        if (server == null) return;
+        ServerLevel overworld = server.overworld();
+        if (overworld == null) {
+            BuildShopMod.LOGGER.warn("[Shop] onServerStarted: overworld not available, deferring stock init");
+            return;
+        }
+        applyCatalog(catalog(), overworld);
+    }
+
+    /**
+     * 数据包重载 / 服务器启动的统一原子应用入口：
+     * 目录解析完成后一次性调用，不存在分类/商品两个 listener 各自应用导致的半成品目录。
+     */
+    public void applyCatalog(ProductCatalog fresh, ServerLevel level) {
+        if (level == null || level.getServer() == null) {
+            applyCatalogHeadless(fresh);
+            return;
+        }
+        MinecraftServer server = level.getServer();
+        if (!server.isSameThread()) {
+            ProductCatalog deferred = fresh;
+            server.execute(() -> applyCatalog(deferred, level));
+            return;
+        }
+        applyCatalogOnMainThread(fresh, level);
+    }
+
+    private void applyCatalogOnMainThread(ProductCatalog fresh, ServerLevel level) {
+        ProductCatalog resolved = fresh.withMaxStacks(ShopServer::resolveDefaultMaxStack);
         ShopSavedData data = dataOf(level);
-        fresh = fresh.withMaxStacks(itemId -> {
-            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(itemId));
-            return item == null || item == BuiltInRegistries.ITEM.get(ResourceLocation.withDefaultNamespace("air"))
-                    ? -1 : item.getDefaultMaxStackSize();
-        });
-        ProductCatalog finalFresh = fresh;
-        for (Product product : fresh.products()) {
-            if (product.stockMode() == StockMode.FINITE && data.stockOf(product.id()) < 0) {
-                data.setStock(product.id(), product.stockQuantity());
+
+        Map<String, Integer> jsonInitial = new LinkedHashMap<>();
+        Set<String> catalogIds = new HashSet<>();
+        for (Product product : resolved.products()) {
+            catalogIds.add(product.id());
+            if (product.stockMode() == StockMode.FINITE) {
+                jsonInitial.put(product.id(), product.stockQuantity());
             }
         }
-        stockStore.clear();
-        for (Map.Entry<String, Integer> entry : data.stock().entrySet()) {
-            stockStore.set(entry.getKey(), entry.getValue());
+        Map<String, Integer> reconciled = StockReconciler.reconcile(data.stock(), jsonInitial, catalogIds);
+        if (!reconciled.equals(data.stock())) {
+            data.replaceStock(reconciled);
         }
-        stockStore.retainOnly(id -> finalFresh.product(id).isPresent());
-        catalogStore.set(fresh);
-        syncToAll(level.getServer().overworld());
-        BuildShopMod.LOGGER.info("Shop catalog reloaded: {} products, {} categories",
-                fresh.productCount(), fresh.categoryCount());
+
+        stockStore.clear();
+        reconciled.forEach(stockStore::set);
+        catalogStore.set(resolved);
+
+        ServerLevel overworld = level.getServer().overworld();
+        if (overworld != null) {
+            syncToAll(overworld);
+        }
+        BuildShopMod.LOGGER.info("Shop catalog applied: {} products, {} categories, {} finite stock entries",
+                resolved.productCount(), resolved.categoryCount(), reconciled.size());
+    }
+
+    private static int resolveDefaultMaxStack(String itemId) {
+        ResourceLocation id = ResourceLocation.tryParse(itemId);
+        if (id == null) return -1;
+        Item item = BuiltInRegistries.ITEM.get(id);
+        return item == null || item == BuiltInRegistries.ITEM.get(ResourceLocation.withDefaultNamespace("air"))
+                ? -1 : item.getDefaultMaxStackSize();
     }
 
     // ------------------------------------------------------------------ purchase
 
     public PurchaseResult purchase(ServerPlayer player, String productId, PurchaseMode mode,
                                    int requestedQuantity, String requestId) {
+        if (!Config.ENABLED.get()) {
+            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.SHOP_DISABLED);
+            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
+            return result;
+        }
+        if (requestId == null || requestId.isBlank() || requestId.length() > MAX_REQUEST_ID_LENGTH) {
+            BuildShopMod.LOGGER.warn("[Shop] rejected purchase with invalid requestId from {}: length={}",
+                    player.getGameProfile().getName(), requestId == null ? 0 : requestId.length());
+            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.INVALID_REQUEST);
+            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
+            return result;
+        }
+
         ProductCatalog catalog = catalog();
         Product product = catalog.product(productId).orElse(null);
         if (product == null) {
-            sendPurchaseResult(player, PurchaseResult.fail(com.tanrunn.buildshop.core.PurchaseFailure.PRODUCT_NOT_FOUND),
-                    Map.of(), Map.of(), requestId);
-            return PurchaseResult.fail(com.tanrunn.buildshop.core.PurchaseFailure.PRODUCT_NOT_FOUND);
-        }
-
-        if (!rateLimited(player, productId)) {
-            PurchaseResult result = PurchaseResult.fail(com.tanrunn.buildshop.core.PurchaseFailure.RATE_LIMITED);
-            sendPurchaseResult(player, result, Map.of(), Map.of(), requestId);
+            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.PRODUCT_NOT_FOUND);
+            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
             return result;
         }
 
         ShopCurrencyProvider currency = currencyFor(product.currency());
         if (currency == null) {
-            PurchaseResult result = PurchaseResult.fail(com.tanrunn.buildshop.core.PurchaseFailure.NO_CURRENCY_PROVIDER);
-            sendPurchaseResult(player, result, Map.of(), Map.of(), requestId);
+            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.NO_CURRENCY_PROVIDER);
+            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
             return result;
         }
 
         ItemStack template = buildItemStack(product);
         if (template.isEmpty() && !product.itemId().equals("minecraft:air")) {
-            PurchaseResult result = PurchaseResult.fail(com.tanrunn.buildshop.core.PurchaseFailure.INVALID_ITEM);
-            sendPurchaseResult(player, result, Map.of(), Map.of(), requestId);
+            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.INVALID_ITEM);
+            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
             return result;
         }
 
         Wallet wallet = new ProviderWallet(player, currency);
-        ItemDispatcher dispatcher = new InventoryDispatcher(player, product, template);
+        ItemDispatcher dispatcher = new InventoryDispatcher(player, template);
 
         PlayerIdempotency idem = idempotencyByPlayer.computeIfAbsent(player.getUUID(), key -> new PlayerIdempotency());
         PurchaseEngine engine = new PurchaseEngine(catalog, stockStore, idem, Config.SERVER_MAX_PER_REQUEST.get());
-        String idemKey = player.getUUID() + ":" + requestId;
-        PurchaseResult result = engine.execute(new PurchaseRequest(productId, mode, requestedQuantity, idemKey), wallet, dispatcher);
+        PurchaseRequest request = new PurchaseRequest(productId, mode, requestedQuantity, requestId);
+
+        // 幂等重放优先：同 requestId 的重复请求（网络重试）直接回放结果，不再扣款/发货。
+        // 注意与引擎内部的 key 保持一致（引擎按玩家作用域存储，key 不含玩家前缀）。
+        String idemKey = PurchaseEngine.idempotencyKey(request);
+        PurchaseResult cached = idem.get(idemKey);
+        if (cached != null) {
+            Map<String, Integer> stockUpdates = new LinkedHashMap<>();
+            if (product.stockMode() == StockMode.FINITE) {
+                stockUpdates.put(productId, stockStore.remaining(productId));
+            }
+            sendPurchaseResult(player, cached, balanceSnapshot(player, product.currency()),
+                    balanceAmountSnapshot(player, product.currency()), stockUpdates, requestId);
+            return cached;
+        }
+
+        if (!rateLimited(player)) {
+            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.RATE_LIMITED);
+            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
+            return result;
+        }
+
+        PurchaseResult result = engine.execute(request, wallet, dispatcher);
 
         ShopSavedData data = dataOf(player);
-        if (result.success()) {
-            data.setDirty();
+        if (result.success() && product.stockMode() == StockMode.FINITE) {
+            data.setStock(productId, stockStore.remaining(productId));
         }
 
         Map<String, Integer> stockUpdates = new LinkedHashMap<>();
-        if (result.success() || result.failure() == com.tanrunn.buildshop.core.PurchaseFailure.INSUFFICIENT_STOCK) {
+        if (result.success() || result.failure() == PurchaseFailure.INSUFFICIENT_STOCK) {
             stockUpdates.put(productId, stockStore.remaining(productId));
         }
-        sendPurchaseResult(player, result, balanceSnapshot(player, product.currency()), stockUpdates, requestId);
+        sendPurchaseResult(player, result, balanceSnapshot(player, product.currency()),
+                balanceAmountSnapshot(player, product.currency()), stockUpdates, requestId);
         return result;
     }
 
-    private boolean rateLimited(ServerPlayer player, String productId) {
+    private boolean rateLimited(ServerPlayer player) {
         long now = player.serverLevel().getGameTime();
         Long last = lastRequestTick.get(player.getUUID());
         if (last != null && now - last < Config.PURCHASE_COOLDOWN_TICKS.get()) {
@@ -176,8 +262,26 @@ public final class ShopServer {
         return true;
     }
 
+    /** 玩家退出：清理玩家级幂等缓存与节流状态，避免无限保留 UUID。 */
+    public void onPlayerLoggedOut(ServerPlayer player) {
+        if (player == null) return;
+        UUID uuid = player.getUUID();
+        idempotencyByPlayer.remove(uuid);
+        lastRequestTick.remove(uuid);
+    }
+
+    /** 服务器停止：清空全部运行时状态。 */
+    public void onServerStopped() {
+        idempotencyByPlayer.clear();
+        lastRequestTick.clear();
+    }
+
     private void sendPurchaseResult(ServerPlayer player, PurchaseResult result,
-                                    Map<String, String> balances, Map<String, Integer> stockUpdates, String requestId) {
+                                    Map<String, String> balances, Map<String, Long> balanceAmounts,
+                                    Map<String, Integer> stockUpdates, String requestId) {
+        if (!isReachable(player, PurchaseResultPayload.TYPE)) {
+            return;
+        }
         PacketDistributor.sendToPlayer(player, new PurchaseResultPayload(
                 requestId == null ? "" : requestId,
                 result.success(),
@@ -185,6 +289,7 @@ public final class ShopServer {
                 result.quantity(),
                 result.totalPrice(),
                 balances,
+                balanceAmounts,
                 stockUpdates
         ));
     }
@@ -261,6 +366,15 @@ public final class ShopServer {
         return result;
     }
 
+    private Map<String, Long> balanceAmountSnapshot(ServerPlayer player, String currencyId) {
+        Map<String, Long> result = new LinkedHashMap<>();
+        ShopCurrencyProvider provider = currencyFor(currencyId);
+        if (provider != null) {
+            result.put(currencyId, provider.balance(player));
+        }
+        return result;
+    }
+
     public String formatBalance(ServerPlayer player, String currencyId) {
         ShopCurrencyProvider provider = currencyFor(currencyId);
         if (provider == null) return "?";
@@ -296,14 +410,31 @@ public final class ShopServer {
 
     // ------------------------------------------------------------------ helpers
 
+    /**
+     * 网络连接有效且已注册本 Mod 频道时才发包。
+     * 跳过：未完成登录/已登出的玩家，以及没有真实网络会话的测试 mock 玩家。
+     */
+    private static boolean isReachable(ServerPlayer player, CustomPacketPayload.Type<?> payloadType) {
+        return player != null && player.connection != null
+                && player.connection.getConnection() != null
+                && player.connection.getConnection().isConnected()
+                && NetworkRegistry.hasChannel(player.connection, payloadType.id());
+    }
+
     /** 有限库存：扣减后同步；无限库存：不扣减。 */
     public void syncToAll(ServerLevel level) {
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
+            if (!isReachable(player, SyncShopPayload.TYPE)) {
+                continue;
+            }
             PacketDistributor.sendToPlayer(player, buildSync(player));
         }
     }
 
     public void syncTo(ServerPlayer player) {
+        if (!isReachable(player, SyncShopPayload.TYPE)) {
+            return;
+        }
         PacketDistributor.sendToPlayer(player, buildSync(player));
     }
 
@@ -374,15 +505,18 @@ public final class ShopServer {
         }
     }
 
-    /** 把玩家背包适配为核心 {@link ItemDispatcher}。 */
-    private static final class InventoryDispatcher implements ItemDispatcher {
+    /**
+     * 把玩家背包适配为核心 {@link ItemDispatcher}。
+     *
+     * <p>容量只统计空槽位 + 与目标 ItemStack 物品和 Data Components 完全兼容的已有堆叠；
+     * 最大堆叠以构造完成后的真实 {@link ItemStack#getMaxStackSize()} 为准（组件可修改）。</p>
+     */
+    static final class InventoryDispatcher implements ItemDispatcher {
         private final ServerPlayer player;
-        private final Product product;
         private final ItemStack template;
 
-        InventoryDispatcher(ServerPlayer player, Product product, ItemStack template) {
+        InventoryDispatcher(ServerPlayer player, ItemStack template) {
             this.player = player;
-            this.product = product;
             this.template = template;
         }
 
@@ -391,41 +525,54 @@ public final class ShopServer {
             Inventory inventory = player.getInventory();
             int freeSlots = 0;
             List<FitCalculator.Slot> slots = new ArrayList<>(40);
-            for (int i = 0; i < 36; i++) {
+            for (int i = 0; i < inventory.items.size(); i++) {
                 ItemStack stack = inventory.getItem(i);
                 if (stack.isEmpty()) {
                     freeSlots++;
-                } else {
-                    slots.add(new FitCalculator.Slot(stack.getCount(), stack.getMaxStackSize()));
+                } else if (ItemStack.isSameItemSameComponents(template, stack)) {
+                    slots.add(new FitCalculator.Slot(stack.getCount(), stack.getMaxStackSize(), true));
                 }
+                // 其他物品 / 不同组件的堆叠：不占用目标商品可用空间。
             }
-            return FitCalculator.fits(slots, product.maxStack(), freeSlots, quantity);
+            return FitCalculator.fits(slots, template.getMaxStackSize(), freeSlots, quantity);
         }
 
         @Override
         public boolean dispense(int quantity) {
             int remaining = quantity;
-            List<ItemStack> given = new ArrayList<>();
+            int placedCount = 0;
             while (remaining > 0) {
-                int chunk = Math.min(remaining, product.maxStack());
+                int chunk = Math.min(remaining, template.getMaxStackSize());
                 ItemStack stack = template.copy();
                 stack.setCount(chunk);
+                // Inventory.add 会修改传入 stack（放入后被清空/减少），不能拿它当回滚凭据。
                 boolean added = player.getInventory().add(stack);
-                if (!added || !stack.isEmpty()) {
-                    // 整笔失败：回滚所有已放入的物品（含部分放入）
-                    if (added) {
-                        player.getInventory().removeItem(stack);
-                    }
-                    for (ItemStack placed : given) {
-                        player.getInventory().removeItem(placed);
-                    }
+                int placed = chunk - stack.getCount();
+                if (placed > 0) {
+                    placedCount += placed;
+                }
+                if (!added || placed <= 0) {
+                    // 整笔失败：按数量移除已放入的物品（含部分放入），不留部分商品。
+                    removeMatching(placedCount);
                     return false;
                 }
-                given.add(stack);
-                remaining -= chunk;
+                remaining -= placed;
             }
             player.getInventory().setChanged();
             return true;
+        }
+
+        private void removeMatching(int count) {
+            if (count <= 0) return;
+            Inventory inventory = player.getInventory();
+            int remaining = count;
+            for (int i = 0; i < inventory.items.size() && remaining > 0; i++) {
+                ItemStack stack = inventory.getItem(i);
+                if (stack.isEmpty() || !ItemStack.isSameItemSameComponents(template, stack)) continue;
+                int taken = Math.min(stack.getCount(), remaining);
+                stack.shrink(taken);
+                remaining -= taken;
+            }
         }
     }
 }

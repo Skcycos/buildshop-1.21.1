@@ -1,12 +1,12 @@
 package com.tanrunn.buildshop.client;
 
-import com.sighs.apricityui.ApricityUI;
 import com.sighs.apricityui.event.Event;
 import com.sighs.apricityui.event.MouseEvent;
 import com.sighs.apricityui.init.Document;
 import com.sighs.apricityui.init.Element;
 import com.sighs.apricityui.screen.ApricityScreen;
 import com.sighs.apricityui.spi.AuiServices;
+import com.sighs.apricityui.slot.ItemStackExpressionCompiler;
 import com.sighs.apricityui.task.FrameTaskScheduler;
 import com.tanrunn.buildshop.BuildShopMod;
 import com.tanrunn.buildshop.core.Category;
@@ -24,6 +24,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -39,24 +40,23 @@ import java.util.UUID;
  *
  * <p>页面脚本保持最少：所有 DOM 操作从 Java 侧发起，且全部在客户端线程执行。
  * 商品卡片创建后复用 DOM 节点，状态更新只改价格/库存/按钮相关文本。</p>
+ *
+ * <p>AUI 刷新（END/autoReload）会重建整个 DOM，旧 Element 引用与监听器失效；
+ * 本类通过逐帧监视 {@link Document#getRefreshGeneration()} 自动重新绑定并重绘。</p>
  */
 public final class ShopScreenController {
 
     public static final ShopScreenController INSTANCE = new ShopScreenController();
     public static final String TEMPLATE_PATH = "buildingshop/screens/building_shop.html";
 
+    private final ShopClientModel model = new ShopClientModel();
+
     private Document document;
     private long generation;
-    private SyncShopPayload lastSync;
-    private final Map<String, String> balances = new LinkedHashMap<>();
-    private final Map<String, Long> balanceAmounts = new LinkedHashMap<>();
-    private final Map<String, String> currencyNames = new LinkedHashMap<>();
-    private String defaultCurrency = Category.ALL_ID;
     private String selectedCategory = Category.ALL_ID;
     private String searchText = "";
     private String qtyDialogProductId;
     private SortMode sortMode = SortMode.DEFAULT;
-    private boolean hideEmptyCategories = true;
 
     private ShopScreenController() {
     }
@@ -88,6 +88,41 @@ public final class ShopScreenController {
         }
         this.generation = linked.getRefreshGeneration();
         rebind();
+        // AUI 刷新后旧 DOM/监听器全部失效：每帧检查一次代际变化并重新绑定。
+        // 用 scheduleAfterFrames(1) 自重排：任务每次都立即完成（返回 true），
+        // 不会像常驻 false 任务那样占用帧预算或阻塞队列；页面关闭/失效即停止。
+        FrameTaskScheduler.scheduleAfterFrames(1, deadline -> {
+            ensureReboundToCurrentDocument();
+            if (shouldKeepWatching()) {
+                FrameTaskScheduler.scheduleAfterFrames(1, this::rebindWatchdogTick);
+            }
+            return true;
+        });
+    }
+
+    private boolean rebindWatchdogTick(long deadlineNs) {
+        ensureReboundToCurrentDocument();
+        if (shouldKeepWatching()) {
+            FrameTaskScheduler.scheduleAfterFrames(1, this::rebindWatchdogTick);
+        }
+        return true;
+    }
+
+    /** 页面仍打开且 Document 未被销毁时才继续监视。 */
+    private boolean shouldKeepWatching() {
+        Document doc = document;
+        return doc != null && !doc.isDisposed();
+    }
+
+    /** 页面刷新（END/autoReload）后重新绑定监听器并重绘，不能继续操作旧节点。 */
+    private void ensureReboundToCurrentDocument() {
+        Document doc = document;
+        if (doc == null || doc.isDisposed()) return;
+        long current = doc.getRefreshGeneration();
+        if (current == generation) return;
+        this.generation = current;
+        rebind();
+        renderAll();
     }
 
     private void rebind() {
@@ -144,33 +179,32 @@ public final class ShopScreenController {
         products.addEventListener("click", event -> onCardClick(event));
         products.addEventListener("contextmenu", event -> onCardContextMenu(event));
 
-        if (lastSync != null) {
-            renderAll();
-        } else {
-            showStatus(Component.translatable("buildshop.ui.syncing").getString(), false);
+        if (balance != null || balanceLabel != null) {
+            renderBalance(doc);
         }
+        renderAll();
     }
 
     // ------------------------------------------------------------------ sync
 
     public void applySync(SyncShopPayload payload) {
         if (payload == null) return;
-        this.lastSync = payload;
-        this.balances.clear();
-        this.balances.putAll(payload.balances());
-        this.balanceAmounts.clear();
-        this.balanceAmounts.putAll(payload.balanceAmounts());
-        this.currencyNames.clear();
-        this.currencyNames.putAll(payload.currencyNames());
-        this.defaultCurrency = payload.defaultCurrency();
-        this.hideEmptyCategories = payload.hideEmptyCategories();
+        model.applySync(payload);
         if (document == null) return;
         renderAll();
     }
 
+    /** 商店总开关关闭：显示自然提示。 */
+    public void applyShopDisabled() {
+        Document doc = document;
+        if (doc != null) {
+            showStatus(Component.translatable("buildshop.ui.disabled").getString(), true);
+        }
+    }
+
     private void renderAll() {
         Document doc = document;
-        if (doc == null || lastSync == null) return;
+        if (doc == null) return;
         renderBalance(doc);
         renderCategories(doc);
         renderProducts();
@@ -180,11 +214,11 @@ public final class ShopScreenController {
         Element balance = doc.getElementById("balance");
         Element label = doc.getElementById("balance-label");
         if (balance != null) {
-            balance.setTextContent(balances.getOrDefault(defaultCurrency, "—"));
+            balance.setTextContent(model.balance(model.defaultCurrency()));
         }
         if (label != null) {
-            String name = currencyNames.getOrDefault(defaultCurrency, defaultCurrency);
-            label.setTextContent("余额 · " + name);
+            String name = model.currencyName(model.defaultCurrency());
+            label.setTextContent(Component.translatable("buildshop.ui.balance.label", name).getString());
         }
     }
 
@@ -197,14 +231,14 @@ public final class ShopScreenController {
         container.appendChild(createCategoryButton(doc, Category.ALL_ID, allName, null));
 
         Map<String, Integer> productCountByCategory = new HashMap<>();
-        for (ProductDto product : lastSync.products()) {
+        for (ProductDto product : model.products()) {
             for (String category : product.categories()) {
                 productCountByCategory.merge(category, 1, Integer::sum);
             }
         }
 
-        for (CategoryDto category : lastSync.categories()) {
-            if (hideEmptyCategories && !productCountByCategory.containsKey(category.id())) {
+        for (CategoryDto category : model.categories()) {
+            if (model.hideEmptyCategories() && !productCountByCategory.containsKey(category.id())) {
                 continue; // 空分类默认隐藏（配置可关）
             }
             container.appendChild(createCategoryButton(doc, category.id(), category.name(), category.iconExpression()));
@@ -233,7 +267,7 @@ public final class ShopScreenController {
 
     private void renderProducts() {
         Document doc = document;
-        if (doc == null || lastSync == null) return;
+        if (doc == null) return;
 
         Element container = doc.getElementById("products");
         Element countEl = doc.getElementById("product-count");
@@ -242,10 +276,10 @@ public final class ShopScreenController {
         Map<String, Element> existing = new LinkedHashMap<>();
         for (Element child : container.children) {
             String id = child.getAttribute("data-id");
-            if (id != null) existing.put(id, child);
+            if (id != null && !id.isBlank()) existing.put(id, child);
         }
 
-        List<ProductDto> ordered = new ArrayList<>(lastSync.products());
+        List<ProductDto> ordered = new ArrayList<>(model.products());
         ordered.sort((a, b) -> switch (sortMode) {
             case PRICE_ASC -> Long.compare(a.unitPrice(), b.unitPrice());
             case PRICE_DESC -> Long.compare(b.unitPrice(), a.unitPrice());
@@ -270,7 +304,7 @@ public final class ShopScreenController {
         }
 
         if (countEl != null) {
-            String all = Component.translatable("buildshop.ui.count", visible, lastSync.products().size()).getString();
+            String all = Component.translatable("buildshop.ui.count", visible, model.products().size()).getString();
             countEl.setTextContent(all);
         }
 
@@ -384,8 +418,8 @@ public final class ShopScreenController {
     /** 余额不足 / 背包空间不足提示（客户端估算，服务端仍是权威）。 */
     private String cardWarning(ProductDto product) {
         if (!product.enabled()) return null;
-        Long balance = balanceAmounts.get(product.currency());
-        if (balance != null && balance < product.unitPrice()) {
+        long balance = model.balanceAmount(product.currency());
+        if (balance < product.unitPrice()) {
             return Component.translatable("buildshop.ui.warn.balance").getString();
         }
         if (freeSpaceFor(product) < 1) {
@@ -399,17 +433,36 @@ public final class ShopScreenController {
                 ? null
                 : Minecraft.getInstance().player.getInventory();
         if (inventory == null) return 0;
+        ItemStack template = clientTemplate(product);
+        int maxStack = Math.max(1, template.isEmpty() ? product.maxStack() : template.getMaxStackSize());
         int freeSlots = 0;
         List<FitCalculator.Slot> slots = new ArrayList<>(40);
         for (int i = 0; i < 36; i++) {
             net.minecraft.world.item.ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty()) {
                 freeSlots++;
-            } else {
-                slots.add(new FitCalculator.Slot(stack.getCount(), stack.getMaxStackSize()));
+            } else if (template.isEmpty() || ItemStack.isSameItemSameComponents(template, stack)) {
+                slots.add(new FitCalculator.Slot(stack.getCount(), stack.getMaxStackSize(), true));
             }
         }
-        return FitCalculator.capacity(slots, product.maxStack(), freeSlots);
+        return FitCalculator.capacity(slots, maxStack, freeSlots);
+    }
+
+    /**
+     * 客户端估算用模板堆叠：优先用 AUI 官方 {@link ItemStackExpressionCompiler} 解析
+     * 服务端同步的完整 SNBT（含自定义组件，如 max_stack_size），保证合并兼容性与
+     * 最大堆叠估算与服务端一致；解析失败回退为注册表默认物品（服务端仍是最终权威）。
+     */
+    private ItemStack clientTemplate(ProductDto product) {
+        if (product.itemExpression() != null && !product.itemExpression().isBlank()) {
+            ItemStack parsed = ItemStackExpressionCompiler.parse(product.itemExpression());
+            if (!parsed.isEmpty()) {
+                return parsed;
+            }
+        }
+        ResourceLocation id = ResourceLocation.tryParse(product.itemId());
+        if (id == null || !BuiltInRegistries.ITEM.containsKey(id)) return ItemStack.EMPTY;
+        return new ItemStack(BuiltInRegistries.ITEM.get(id));
     }
 
     private boolean itemAvailable(ProductDto product) {
@@ -462,6 +515,7 @@ public final class ShopScreenController {
     }
 
     private void onCardClick(Event event) {
+        // AUI 中 click 事件只在鼠标左键（button==0）时触发，右键只触发 contextmenu，不会重复单买。
         Element card = cardFrom(event);
         if (card == null) return;
         String productId = card.getAttribute("data-id");
@@ -489,11 +543,7 @@ public final class ShopScreenController {
     }
 
     private ProductDto productById(String id) {
-        if (lastSync == null) return null;
-        for (ProductDto product : lastSync.products()) {
-            if (product.id().equals(id)) return product;
-        }
-        return null;
+        return model.product(id);
     }
 
     private void sendPurchase(String productId, PurchaseMode mode, int quantity) {
@@ -511,7 +561,8 @@ public final class ShopScreenController {
         Element card = walkUp(target, "data-id");
         if (card == null) return null;
         String classes = card.getAttribute("class");
-        return classes != null && classes.startsWith("card") ? card : null;
+        // 精确匹配卡片本身："card" 或 "card disabled"；card-name 等子元素不是卡片。
+        return classes != null && ("card".equals(classes) || classes.startsWith("card ")) ? card : null;
     }
 
     private Element elementOf(Event event) {
@@ -520,9 +571,12 @@ public final class ShopScreenController {
     }
 
     private Element walkUp(Element start, String attribute) {
+        // 注意：AUI 的 getAttribute 对缺失属性返回 ""（非 null），必须校验非空，
+        // 否则任意子元素都会被误判为带属性本身。
         Element current = start;
         while (current != null) {
-            if (current.getAttribute(attribute) != null) return current;
+            String value = current.getAttribute(attribute);
+            if (value != null && !value.isBlank()) return current;
             current = current.parentElement;
         }
         return null;
@@ -607,16 +661,19 @@ public final class ShopScreenController {
 
     // ------------------------------------------------------------------ purchase result
 
+    /**
+     * 购买结果：先更新数据模型（余额文本 + 数值 + 库存），再整体重绘，
+     * 保证后续搜索、排序、分类切换后的卡片、余额不足警告与数量弹窗估算仍然正确。
+     */
     public void applyPurchaseResult(PurchaseResultPayload payload) {
-        Document doc = document;
-        if (payload.balances() != null) {
-            balances.putAll(payload.balances());
-        }
+        if (payload == null) return;
+        model.applyBalanceUpdates(payload.balances(), payload.balanceAmounts());
         if (payload.stockUpdates() != null) {
-            payload.stockUpdates().forEach((productId, remaining) -> updateStockLabel(doc, productId, remaining));
+            payload.stockUpdates().forEach(model::applyStockUpdate);
         }
+        Document doc = document;
         if (doc != null) {
-            renderBalance(doc);
+            renderAll();
         }
 
         String message;
@@ -630,26 +687,6 @@ public final class ShopScreenController {
         }
         if (qtyDialogProductId != null) {
             hideQtyDialog();
-        }
-    }
-
-    private void updateStockLabel(Document doc, String productId, int remaining) {
-        if (doc == null || lastSync == null) return;
-        Element container = doc.getElementById("products");
-        if (container == null) return;
-        for (Element child : container.children) {
-            if (productId.equals(child.getAttribute("data-id"))) {
-                ProductDto product = productById(productId);
-                if (product != null) {
-                    ProductDto updated = new ProductDto(
-                            product.id(), product.itemId(), product.itemExpression(), product.displayName(),
-                            product.description(), product.currency(), product.unitPrice(), product.formattedPrice(),
-                            product.bulkSize(), product.maxStack(), product.stockMode(), remaining,
-                            product.enabled(), product.categories(), product.sort());
-                    updateCard(child, updated);
-                }
-                return;
-            }
         }
     }
 

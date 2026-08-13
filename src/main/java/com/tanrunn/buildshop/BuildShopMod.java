@@ -5,6 +5,7 @@ import com.tanrunn.buildshop.network.BuildShopNetwork;
 import com.tanrunn.buildshop.server.CurrencyRegistry;
 import com.tanrunn.buildshop.server.ShopCommands;
 import com.tanrunn.buildshop.server.ShopDataLoader;
+import com.tanrunn.buildshop.server.ShopSavedData;
 import com.tanrunn.buildshop.server.ShopServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
@@ -18,6 +19,7 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
@@ -67,6 +69,14 @@ public class BuildShopMod {
         @SubscribeEvent
         public static void onServerStarted(ServerStartedEvent event) {
             CurrencyRegistry.registerDefaults();
+            // 把已加载的目录应用到 overworld SavedData 与运行时 StockStore：
+            // 首次启动时目录可能在 overworld 就绪前就已加载，这里统一补做库存初始化。
+            ShopServer.INSTANCE.onServerStarted(event.getServer());
+        }
+
+        @SubscribeEvent
+        public static void onServerStopped(ServerStoppedEvent event) {
+            ShopServer.INSTANCE.onServerStopped();
         }
 
         @SubscribeEvent
@@ -77,12 +87,25 @@ public class BuildShopMod {
         @SubscribeEvent
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (event.getEntity() instanceof ServerPlayer player) {
-                // 首次登录发放初始余额
-                var data = ShopServer.INSTANCE.dataOf(player);
-                if (data.virtualBalance(player.getUUID()) <= 0 && Config.VIRTUAL_INITIAL_BALANCE.get() > 0) {
-                    data.setVirtualBalance(player.getUUID(), Config.VIRTUAL_INITIAL_BALANCE.get());
+                // 首次登录发放初始余额：持久化的"已初始化"标记保证只发一次，
+                // 余额花光/管理员清零/重新登录都不会再次领取；初始余额配置为 0 也记录标记。
+                ShopSavedData data = ShopServer.INSTANCE.dataOf(player);
+                if (!data.isBalanceInitialized(player.getUUID())) {
+                    data.markBalanceInitialized(player.getUUID());
+                    long initial = Config.VIRTUAL_INITIAL_BALANCE.get();
+                    if (initial > 0 && data.virtualBalance(player.getUUID()) <= 0) {
+                        data.setVirtualBalance(player.getUUID(), initial);
+                    }
                 }
                 ShopServer.INSTANCE.syncTo(player);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                // 清理玩家级幂等缓存与节流状态，避免长期开服无限保留 UUID。
+                ShopServer.INSTANCE.onPlayerLoggedOut(player);
             }
         }
     }

@@ -6,6 +6,7 @@ import com.tanrunn.buildshop.BuildShopMod;
 import com.tanrunn.buildshop.core.ProductCatalog;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -21,7 +22,13 @@ import java.util.Map;
  * data/&lt;namespace&gt;/building_shop/products/&lt;id&gt;.json
  * </pre>
  *
- * <p>商品 ID 与分类 ID 取文件名（不含 .json），排序由 JSON 的 {@code sort} 字段决定。</p>
+ * <p>商品/分类 ID 优先取 JSON 的 {@code id} 字段；内部资源键使用完整的
+ * {@code namespace:path}（不同 namespace 的同名文件不会互相覆盖）。
+ * 排序由 JSON 的 {@code sort} 字段决定。</p>
+ *
+ * <p>原子性：分类与商品是两个独立 reload listener，各自 apply 时会得到半份数据。
+ * 本类按"同一 reload 周期（同一 ResourceManager 实例）内两个 listener 都完成"才
+ * 重建并应用完整目录，避免中间半成品目录或重复初始化库存。</p>
  */
 public final class ShopDataLoader {
 
@@ -31,14 +38,21 @@ public final class ShopDataLoader {
     private final Map<String, JsonElement> rawProducts = new LinkedHashMap<>();
     private boolean loadedOnce;
 
+    /** 当前 reload 周期（按 ResourceManager 实例身份区分）。 */
+    private Object epochManager;
+    private boolean categoriesAppliedInEpoch;
+    private boolean productsAppliedInEpoch;
+
     public SimpleJsonResourceReloadListener categoriesListener() {
         return new SimpleJsonResourceReloadListener(GSON, ProductCatalog.CATEGORY_FOLDER) {
             @Override
             protected void apply(Map<ResourceLocation, JsonElement> map, ResourceManager manager, ProfilerFiller profiler) {
+                beginEpoch(manager);
                 rawCategories.clear();
                 for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
-                    rawCategories.put(fileName(entry.getKey()), entry.getValue());
+                    rawCategories.put(entry.getKey().toString(), entry.getValue());
                 }
+                categoriesAppliedInEpoch = true;
                 BuildShopMod.LOGGER.info("Shop categories loaded: {}", rawCategories.size());
                 rebuildIfReady();
             }
@@ -49,34 +63,42 @@ public final class ShopDataLoader {
         return new SimpleJsonResourceReloadListener(GSON, ProductCatalog.PRODUCT_FOLDER) {
             @Override
             protected void apply(Map<ResourceLocation, JsonElement> map, ResourceManager manager, ProfilerFiller profiler) {
+                beginEpoch(manager);
                 rawProducts.clear();
                 for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
-                    rawProducts.put(fileName(entry.getKey()), entry.getValue());
+                    rawProducts.put(entry.getKey().toString(), entry.getValue());
                 }
+                productsAppliedInEpoch = true;
                 BuildShopMod.LOGGER.info("Shop products loaded: {}", rawProducts.size());
                 rebuildIfReady();
             }
         };
     }
 
+    private void beginEpoch(ResourceManager manager) {
+        if (manager != epochManager) {
+            epochManager = manager;
+            categoriesAppliedInEpoch = false;
+            productsAppliedInEpoch = false;
+        }
+    }
+
     private void rebuildIfReady() {
         loadedOnce = true;
+        if (!categoriesAppliedInEpoch || !productsAppliedInEpoch) {
+            return;
+        }
         ProductCatalog catalog = ProductCatalog.fromJson(rawCategories, rawProducts);
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) {
+        ServerLevel overworld = server == null ? null : server.overworld();
+        if (overworld == null) {
             ShopServer.INSTANCE.applyCatalogHeadless(catalog);
             return;
         }
-        ShopServer.INSTANCE.onCatalogReload(catalog, server.overworld());
+        ShopServer.INSTANCE.applyCatalog(catalog, overworld);
     }
 
     public boolean isLoaded() {
         return loadedOnce;
-    }
-
-    private static String fileName(ResourceLocation location) {
-        String path = location.getPath();
-        int slash = path.lastIndexOf('/');
-        return slash >= 0 ? path.substring(slash + 1) : path;
     }
 }

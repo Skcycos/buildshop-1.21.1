@@ -6,7 +6,10 @@ import java.util.Map;
 /**
  * 有限库存（纯数据）。
  *
- * <p>只保存有限库存商品的数量；无限库存商品不占用条目。数量不允许出现负数。
+ * <p>只保存有限库存商品的数量；无限库存商品不占用条目。
+ * <p>零库存语义：条目 {@code 0} 表示"已初始化的空库存"，与"尚未初始化"
+ * （条目缺失，{@link #remaining} 返回 -1）严格区分。卖光后条目保留为 0，
+ * 重启或重载不会回填初始值。
  * 提供 {@link #toMap()} / {@link #fromMap(Map)} 用于 SavedData 持久化。</p>
  */
 public final class StockStore {
@@ -22,23 +25,24 @@ public final class StockStore {
         return remaining.containsKey(productId);
     }
 
-    /** 尝试扣减库存。库存不足时返回 false 且不扣减。 */
+    /** 尝试扣减库存。库存不足或未初始化时返回 false 且不扣减。 */
     public boolean consume(String productId, int quantity) {
         Integer current = remaining.get(productId);
         if (current == null) return false;
         if (quantity > current) return false;
-        int next = current - quantity;
-        if (next <= 0) {
-            remaining.remove(productId);
-        } else {
-            remaining.put(productId, next);
-        }
+        remaining.put(productId, current - quantity);
         return true;
     }
 
-    /** 初始化或重置有限库存数量。 */
+    /** 把扣减的库存加回（发货失败回滚）。 */
+    public void restore(String productId, int quantity) {
+        int next = Math.max(0, remaining.getOrDefault(productId, 0)) + quantity;
+        remaining.put(productId, next);
+    }
+
+    /** 初始化或重置有限库存数量。负值视为未初始化（移除条目）。 */
     public void set(String productId, int quantity) {
-        if (quantity <= 0) {
+        if (quantity < 0) {
             remaining.remove(productId);
         } else {
             remaining.put(productId, quantity);
@@ -62,7 +66,7 @@ public final class StockStore {
     public static StockStore fromMap(Map<String, Integer> snapshot) {
         StockStore store = new StockStore();
         if (snapshot != null) {
-            snapshot.forEach((id, quantity) -> store.set(id, quantity));
+            snapshot.forEach(store::set);
         }
         return store;
     }

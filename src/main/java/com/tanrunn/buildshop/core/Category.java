@@ -21,11 +21,18 @@ public final class Category {
         this.enabled = enabled;
     }
 
-    public static Category fromJson(String id, JsonObject json) {
+    /** 分类 ID 优先取 JSON {@code id} 字段，缺省回退为资源键。 */
+    public static Category fromJson(String resourceKey, JsonObject json) {
+        String id = optString(json, "id", null);
+        if (id == null || id.isBlank()) {
+            id = resourceKey;
+        }
         String name = optString(json, "name", null);
         String icon = optString(json, "icon", null);
         int sort = optInt(json, "sort", 0);
-        boolean enabled = json.has("enabled") ? json.get("enabled").getAsBoolean() : true;
+        // enabled 非布尔时按未配置（启用）处理，不抛异常终止加载。
+        boolean enabled = !json.has("enabled") || !json.get("enabled").isJsonPrimitive()
+                || json.get("enabled").getAsBoolean();
         return new Category(id, name, icon, sort, enabled);
     }
 
@@ -57,6 +64,11 @@ public final class Category {
 
     private static int optInt(JsonObject json, String key, int fallback) {
         JsonElement element = json.get(key);
-        return element != null && element.isJsonPrimitive() ? element.getAsInt() : fallback;
+        if (element == null || !element.isJsonPrimitive()) return fallback;
+        try {
+            return element.getAsInt();
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }

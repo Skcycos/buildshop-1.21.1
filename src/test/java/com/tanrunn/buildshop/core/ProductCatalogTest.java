@@ -128,4 +128,110 @@ class ProductCatalogTest {
         ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
         assertEquals("minecraft:stone", catalog.product("x").orElseThrow().effectiveName());
     }
+
+    @Test
+    void malformedNumericFieldsDoNotCrashTheWholeReload() {
+        Map<String, JsonElement> products = Map.of(
+                "bad_price", JsonParser.parseString("{\"item\":\"minecraft:stone\",\"unitPrice\":\"abc\"}"),
+                "bad_stock", JsonParser.parseString(
+                        "{\"item\":\"minecraft:glowstone\",\"unitPrice\":30,\"stock\":{\"mode\":\"finite\",\"quantity\":\"oops\"}}"),
+                "neg_stock", JsonParser.parseString(
+                        "{\"item\":\"minecraft:glowstone\",\"unitPrice\":30,\"stock\":{\"mode\":\"finite\",\"quantity\":-5}}"),
+                "neg_bulk", JsonParser.parseString(
+                        "{\"item\":\"minecraft:stone\",\"unitPrice\":1,\"bulkSize\":-3}"),
+                "bad_item", JsonParser.parseString("{\"item\":\"not a resource id\",\"unitPrice\":1}"),
+                "ok", JsonParser.parseString("{\"item\":\"minecraft:stone\",\"unitPrice\":3}")
+        );
+        // 单条畸形数据不得导致整个目录重载崩溃：正确条目照常加载。
+        ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
+        assertEquals(1, catalog.productCount());
+        assertTrue(catalog.product("ok").isPresent());
+    }
+
+    @Test
+    void productIdComesFromJsonFieldNotResourceKey() {
+        Map<String, JsonElement> products = Map.of(
+                "some:path/to/comparator", JsonParser.parseString(
+                        "{\"id\":\"comparator\",\"item\":\"minecraft:comparator\",\"unitPrice\":12}")
+        );
+        ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
+        assertEquals(1, catalog.productCount());
+        assertTrue(catalog.product("comparator").isPresent(), "ID 应取 JSON 的 id 字段");
+        assertFalse(catalog.product("some:path/to/comparator").isPresent());
+    }
+
+    @Test
+    void duplicateProductIdsKeepFirstAndDoNotCrash() {
+        Map<String, JsonElement> products = Map.of(
+                "ns1:products/comparator", JsonParser.parseString(
+                        "{\"id\":\"comparator\",\"item\":\"minecraft:comparator\",\"unitPrice\":12}"),
+                "ns2:products/comparator", JsonParser.parseString(
+                        "{\"id\":\"comparator\",\"item\":\"minecraft:stone\",\"unitPrice\":99}"),
+                "ok", JsonParser.parseString("{\"id\":\"ok\",\"item\":\"minecraft:stone\",\"unitPrice\":1}")
+        );
+        ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
+        assertEquals(2, catalog.productCount(), "重复 ID 只保留一个，其余条目照常加载");
+        assertTrue(catalog.product("comparator").isPresent(), "重复 ID 保留其中一条且不崩溃");
+        assertTrue(catalog.product("ok").isPresent());
+    }
+
+    @Test
+    void unknownCategoryReferenceDoesNotCrash() {
+        Map<String, JsonElement> categories = one("wood", """
+                {"id":"wood","name":"木材"}
+                """);
+        Map<String, JsonElement> products = one("p", """
+                {"id":"p","item":"minecraft:oak_planks","categories":["wood","does_not_exist"],"unitPrice":1}
+                """);
+        ProductCatalog catalog = ProductCatalog.fromJson(categories, products);
+        assertEquals(1, catalog.productCount(), "未知分类引用只警告，不中断加载");
+    }
+
+    @Test
+    void finiteStockQuantityZeroIsValid() {
+        Map<String, JsonElement> products = one("z", """
+                {"id":"z","item":"minecraft:glowstone","unitPrice":30,"stock":{"mode":"finite","quantity":0}}
+                """);
+        ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
+        assertEquals(StockMode.FINITE, catalog.product("z").orElseThrow().stockMode());
+        assertEquals(0, catalog.product("z").orElseThrow().stockQuantity());
+    }
+
+    @Test
+    void categoryIdComesFromJsonField() {
+        Map<String, JsonElement> categories = Map.of(
+                "other:path/light", JsonParser.parseString("{\"id\":\"light\",\"name\":\"光源\"}")
+        );
+        ProductCatalog catalog = ProductCatalog.fromJson(categories, Map.of());
+        assertTrue(catalog.category("light").isPresent());
+    }
+
+    @Test
+    void nonBooleanEnabledDoesNotCrashTheReload() {
+        // 回归：enabled 为对象/数组等非法类型时，单条商品进入错误处理，
+        // 不能抛 UnsupportedOperationException 终止整个目录加载。
+        Map<String, JsonElement> products = Map.of(
+                "bad_enabled", JsonParser.parseString(
+                        "{\"id\":\"bad_enabled\",\"item\":\"minecraft:stone\",\"unitPrice\":1,\"enabled\":{}}"),
+                "bad_enabled_arr", JsonParser.parseString(
+                        "{\"id\":\"bad_enabled_arr\",\"item\":\"minecraft:stone\",\"unitPrice\":1,\"enabled\":[1,2]}"),
+                "ok", JsonParser.parseString(
+                        "{\"id\":\"ok\",\"item\":\"minecraft:stone\",\"unitPrice\":3}")
+        );
+        ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
+        assertEquals(3, catalog.productCount(), "非法 enabled 不得终止其他商品加载");
+        assertTrue(catalog.product("bad_enabled").orElseThrow().enabled(), "非法 enabled 按未配置（启用）处理");
+        assertTrue(catalog.product("ok").isPresent());
+    }
+
+    @Test
+    void categoryWithNonBooleanEnabledDoesNotCrash() {
+        Map<String, JsonElement> categories = Map.of(
+                "weird", JsonParser.parseString("{\"id\":\"weird\",\"name\":\"怪\",\"enabled\":{}}"),
+                "normal", JsonParser.parseString("{\"id\":\"normal\",\"name\":\"正常\"}")
+        );
+        ProductCatalog catalog = ProductCatalog.fromJson(categories, Map.of());
+        assertEquals(2, catalog.categoryCount(), "非法 enabled 分类不得终止加载");
+        assertTrue(catalog.category("weird").orElseThrow().enabled());
+    }
 }

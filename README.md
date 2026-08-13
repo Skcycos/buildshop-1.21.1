@@ -9,7 +9,7 @@
 - 商品目录、分类和价格：已支持
 - 服务端购买事务：已支持
 - 虚拟货币与物品货币：已支持
-- 有限库存：已支持
+- 有限库存：已支持（持久化、零库存与未初始化严格区分）
 - 建筑商店 UI：已支持
 - AUI overflow 边框裁剪问题：已整理 issue，见 [AUI_BORDER_CLIPPING_ISSUE.md](AUI_BORDER_CLIPPING_ISSUE.md)
 
@@ -51,6 +51,13 @@
 
 `serverOnly` 会让开发环境中的 ApricityUI 变为 `compileOnly`，避免客户端 UI Mod 被专用服务端加载。生产服务端只安装本 Mod 即可，客户端需要安装 ApricityUI。
 
+> ⚠️ **部署拓扑限制（ApricityUI 1.2.1 上游约束，已实测）**
+>
+> - ApricityUI 1.2.1 的 `apricityui:*` payload 频道在客户端以**必需（required）**方式注册，服务器若未声明这些频道，客户端会在握手时断开（`Channel ... missing on the server side, but required on the client!`）。
+> - 同时 ApricityUI 1.2.1 **无法在专用服务器上加载**（`AuiServicesBootstrap` 引用客户端 `RenderService`，服务器启动即报 "ApricityUI has failed to load correctly"）。
+> - 因此"无 AUI 的专用服务器 + 带 AUI 的真实客户端"当前**无法完成握手**。这不是本 Mod 的缺陷，而是 ApricityUI 1.2.1 的频道注册策略与服务器端不兼容；需要在 ApricityUI 提供可选频道或服务器端兼容版本后，该部署拓扑才成立。
+> - 当前可行的验收/运行环境：客户端连**集成服务器（单机）**或任何**带 AUI 的服务端**（如 dev 环境的 `runClient` 内嵌服务器）。专用服务器可继续用于验证目录加载、库存初始化、命令与数据持久化（见下文 `runServer` 部分）。
+
 ## 游戏内使用
 
 打开商店：
@@ -65,12 +72,25 @@
 /buildingshop reload
 /buildingshop list
 /buildingshop info <商品 ID>
-/buildingshop balance
-/buildingshop give <玩家> <商品 ID> <数量>
+/buildingshop balance [玩家]
+/buildingshop give <玩家> <数量>
 /buildingshop stock set <商品 ID> <数量>
 /buildingshop stock add <商品 ID> <数量>
 /buildingshop stock restock <商品 ID>
 ```
+
+- `give` 发放的是**虚拟金币**（`virtual_coins`），不是商品物品；商品发货只能通过商店购买。
+- `reload` 与原版 `/reload` 等价：保留当前已选择的数据包（不会卸载服务器已有外部数据包），并纳入新放入数据包目录的数据包；重载在后台异步执行，完成后才提示成功，失败会提示并记录日志。
+- `balance` 可省略玩家参数查看自己（需要权限 2 才能使用该命令）。
+- `stock set 0` 会把商品库存明确设置为 0（卖完状态），重启后仍为 0，不会被初始值补满；`restock` 才恢复初始值。
+
+## enabled 总开关
+
+配置文件 `buildshop-common.toml` 中 `enabled`（默认 `true`）是商店总开关：
+
+- 关闭时，普通玩家无法打开商店（命令与网络请求都会被服务端拒绝）、无法请求同步、无法购买；伪造的网络购买请求同样会被服务端拒绝。
+- 管理命令（`list`/`info`/`balance`/`give`/`stock`/`reload`）仍然可用，方便管理员检查和恢复配置。
+- 关闭状态客户端会显示"建筑商店当前已关闭 / The building shop is currently disabled"提示。
 
 ## 商品数据
 
@@ -82,7 +102,39 @@ src/main/resources/data/buildshop/building_shop/
 └── products/
 ```
 
-每个商品使用一个 JSON 文件定义，分类文件通过商品 ID 引用商品。修改资源后可使用 `/buildingshop reload` 重载服务端数据。
+- 每个商品使用一个 JSON 文件定义；分类归属通过商品 JSON 的 `categories` 数组（分类 ID 列表）声明，例如 `"categories": ["redstone", "light"]`。
+- 商品 ID 与分类 ID 取 JSON 内的 `id` 字段；缺省时回退为数据包资源键 `namespace:path`。不同 namespace 的同名文件不会互相冲突。
+- 有限库存商品示例：
+
+```json
+{
+  "id": "comparator",
+  "item": "minecraft:comparator",
+  "categories": ["redstone"],
+  "currency": "virtual_coins",
+  "unitPrice": 12,
+  "bulkSize": 16,
+  "stock": { "mode": "finite", "quantity": 500 }
+}
+```
+
+- 有限库存解析校验：`quantity`/`bulkSize` 必须为非负整数，`unitPrice` 必须为正数，`item` 必须是合法的资源 ID；出错条目会被跳过并记录包含文件/商品 ID 的日志，不会导致整个目录重载失败。
+- 修改资源后可使用 `/buildingshop reload` 重载服务端数据。
+
+### 有限库存持久化行为
+
+- 首次启动（或商品首次出现）时，有限库存按 JSON 的 `stock.quantity` 初始化并持久化到 overworld 的 `buildshop_shop` 数据。
+- 购买成功会把扣减后的库存写回持久化数据；卖完后重启或 `/reload`，库存仍为 0，不会被初始值补满。
+- 数据包重载不会重置已有有限库存；只有**新增**的有限库存商品才使用 JSON 初始值。
+- 商品从目录删除时，其持久化库存条目一并清理（有限库存商品改为无限库存时同样清理）。
+- 库存状态区分两种：`-1` = 尚未初始化（不应出现），`0` = 已明确卖完。
+- 库存、余额数据统一保存在服务器 overworld 的 DimensionDataStorage：玩家在主世界、下界、末地看到的是同一份余额与库存，管理员在任意维度执行的库存命令重启后都保持。
+
+### 余额发放与存档迁移
+
+- 每个玩家 UUID 有一个持久化的"已初始化余额"标记：首次登录只发放一次 `virtualInitialBalance` 配置的初始余额（默认 1000）。
+- 花光余额、管理员把余额设为 0、重新登录，都不会再次领取。
+- 旧存档迁移：已有正余额的玩家在读取时自动视为已初始化，不会重复发钱；初始余额配置为 0 时也会正确记录初始化状态。
 
 ## UI 文件
 
@@ -129,9 +181,17 @@ src/main/resources/
 ./gradlew build
 ```
 
+GameTest（服务器内集成测试，验证首次库存初始化、跨维度同一数据、购买持久化等）：
+
+```bash
+./gradlew runGameTestServer -PserverOnly
+```
+
 ## 已知问题
 
-ApricityUI `1.2.1` 在滚动容器中存在首行子元素 `border-top` 被裁剪的问题，具体复现步骤和源码定位见 [AUI_BORDER_CLIPPING_ISSUE.md](AUI_BORDER_CLIPPING_ISSUE.md)。项目不会通过伪元素或额外装饰节点伪造边框来掩盖该问题。
+- ApricityUI `1.2.1` 在滚动容器中存在首行子元素 `border-top` 被裁剪的问题，具体复现步骤和源码定位见 [AUI_BORDER_CLIPPING_ISSUE.md](AUI_BORDER_CLIPPING_ISSUE.md)。项目不会通过伪元素或额外装饰节点伪造边框来掩盖该问题。
+- ApricityUI `1.2.1` 的 flex 子项内部 `fr`/百分比高度会取父级显式 height 而非 flex 实际分配值，导致高度被高估、内容溢出。本项目用确定高度（`calc(100vh - 320px)`）绕过，详见 [AUI_FLEX_FR_LAYOUT_ISSUE.md](docs/AUI_FLEX_FR_LAYOUT_ISSUE.md)。
+- 发现并修复的 AUI 上游问题与已提交 PR 的完整记录（含验证数据、审核关注点）：[AUI_ISSUES_AND_PRS_REVIEW.md](docs/AUI_ISSUES_AND_PRS_REVIEW.md)。
 
 ## 许可证
 

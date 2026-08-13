@@ -18,9 +18,21 @@ class TemplateCleanupTest {
             "examplemod", "example_mod", "ExampleMod", "example.com", "com.example"
     );
 
+    private static Path projectRoot() {
+        // FML-JUnit 把工作目录切到 build/minecraft-junit，向上寻找含 build.gradle 的项目根。
+        Path current = Path.of("").toAbsolutePath();
+        while (current != null) {
+            if (Files.exists(current.resolve("build.gradle")) && Files.exists(current.resolve("settings.gradle"))) {
+                return current;
+            }
+            current = current.getParent();
+        }
+        return Path.of("").toAbsolutePath();
+    }
+
     @Test
     void noExampleModLeftoversInSources() throws IOException {
-        Path root = Path.of("").toAbsolutePath();
+        Path root = projectRoot();
         Path src = root.resolve("src/main/java");
         Path gradle = root.resolve("build.gradle");
 
@@ -40,7 +52,7 @@ class TemplateCleanupTest {
 
     @Test
     void buildGradleHasNoExampleModReferences() throws IOException {
-        Path gradle = Path.of("").toAbsolutePath().resolve("build.gradle");
+        Path gradle = projectRoot().resolve("build.gradle");
         String content = Files.readString(gradle, StandardCharsets.UTF_8);
         for (String forbidden : FORBIDDEN) {
             assertFalse(content.toLowerCase().contains(forbidden.toLowerCase()),
@@ -50,7 +62,7 @@ class TemplateCleanupTest {
 
     @Test
     void modIdIsBuildshopEverywhere() throws IOException {
-        Path root = Path.of("").toAbsolutePath();
+        Path root = projectRoot();
         String main = Files.readString(root.resolve("src/main/java/com/tanrunn/buildshop/BuildShopMod.java"),
                 StandardCharsets.UTF_8);
         assertFalse(main.contains("examplemod"), "BuildShopMod references examplemod");

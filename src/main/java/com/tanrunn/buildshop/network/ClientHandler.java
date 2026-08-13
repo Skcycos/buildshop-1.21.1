@@ -3,6 +3,7 @@ package com.tanrunn.buildshop.network;
 import com.tanrunn.buildshop.client.ShopScreenController;
 import com.tanrunn.buildshop.network.BuildShopNetwork.OpenShopPayload;
 import com.tanrunn.buildshop.network.BuildShopNetwork.PurchaseResultPayload;
+import com.tanrunn.buildshop.network.BuildShopNetwork.ShopDisabledPayload;
 import com.tanrunn.buildshop.network.BuildShopNetwork.SyncShopPayload;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -18,6 +19,10 @@ public final class ClientHandler {
 
     public static void handleSyncShop(SyncShopPayload payload, IPayloadContext context) {
         Minecraft.getInstance().execute(() -> ShopScreenController.INSTANCE.applySync(payload));
+    }
+
+    public static void handleShopDisabled(ShopDisabledPayload payload, IPayloadContext context) {
+        Minecraft.getInstance().execute(() -> ShopScreenController.INSTANCE.applyShopDisabled());
     }
 
     public static void handlePurchaseResult(PurchaseResultPayload payload, IPayloadContext context) {

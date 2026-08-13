@@ -1,15 +1,21 @@
 package com.tanrunn.buildshop.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 服务端购买事务（纯逻辑，可在单元测试中完整验证）。
  *
- * <p>事务顺序（与设计指南第十一节一致）：检查商品 → 检查启用 → 计算数量 →
- * 检查上限 → 检查库存 → 检查背包空间 → 检查余额 → 扣款 → 发货 → 扣库存 →
- * 任何一步失败都不扣款不发货不扣库存；扣款后发货失败必须退款。</p>
+ * <p>事务顺序：检查商品 → 检查启用 → 计算数量 → 检查上限 → 检查库存 →
+ * 检查背包空间 → 检查余额 → 扣款 → 扣库存 → 发货。
+ * 任何一步失败都不扣款不发货不扣库存；扣款后库存失败必须退款；
+ * 发货失败必须恢复库存并退款。退款失败时绝不谎报"已退款"，返回诚实消息并记录高等级日志。</p>
  *
  * <p>引擎不接触 Minecraft：玩家钱包、背包与库存通过接口注入。</p>
  */
 public final class PurchaseEngine {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("buildshop.core");
 
     private final ProductCatalog catalog;
     private final StockStore stock;
@@ -23,19 +29,28 @@ public final class PurchaseEngine {
         this.serverMaxPerRequest = Math.max(1, serverMaxPerRequest);
     }
 
+    /**
+     * 幂等键：同一玩家、同一 requestId 且针对同一商品/模式/数量的请求视为同一次请求。
+     * 同一 requestId 用于不同商品/数量时不互相遮蔽。
+     */
+    public static String idempotencyKey(PurchaseRequest request) {
+        return request.productId() + "|" + request.requestId() + "|" + request.mode().name()
+                + "|" + request.requestedQuantity();
+    }
+
     public PurchaseResult execute(PurchaseRequest request, Wallet wallet, ItemDispatcher dispatcher) {
-        String idemKey = request.requestId();
+        String idemKey = idempotencyKey(request);
         PurchaseResult cached = idempotency.get(idemKey);
         if (cached != null) {
             return cached;
         }
 
-        PurchaseResult result = run(request, wallet, dispatcher);
+        PurchaseResult result = run(request, idemKey, wallet, dispatcher);
         idempotency.putIfAbsent(idemKey, result);
         return result;
     }
 
-    private PurchaseResult run(PurchaseRequest request, Wallet wallet, ItemDispatcher dispatcher) {
+    private PurchaseResult run(PurchaseRequest request, String idemKey, Wallet wallet, ItemDispatcher dispatcher) {
         Product product = catalog.product(request.productId()).orElse(null);
         if (product == null) {
             return PurchaseResult.fail(PurchaseFailure.PRODUCT_NOT_FOUND);
@@ -71,21 +86,33 @@ public final class PurchaseEngine {
             return PurchaseResult.fail(PurchaseFailure.INSUFFICIENT_INVENTORY);
         }
 
-        if (!wallet.withdraw(totalPrice, request.requestId())) {
+        if (!wallet.withdraw(totalPrice, idemKey)) {
             return PurchaseResult.fail(PurchaseFailure.WITHDRAW_FAILED);
         }
 
-        if (!dispatcher.dispense(plan.quantity)) {
-            wallet.refund(totalPrice, request.requestId());
-            return PurchaseResult.fail(PurchaseFailure.DELIVERY_FAILED);
-        }
-
-        if (product.stockMode() == StockMode.FINITE) {
+        boolean finite = product.stockMode() == StockMode.FINITE;
+        if (finite) {
             boolean consumed = stock.consume(product.id(), plan.quantity);
             if (!consumed) {
-                wallet.refund(totalPrice, request.requestId());
+                if (!wallet.refund(totalPrice, idemKey)) {
+                    LOGGER.error("[Shop] stock consume failed AND refund failed: product={} qty={} price={} requestId={}",
+                            product.id(), plan.quantity, totalPrice, request.requestId());
+                    return PurchaseResult.fail(PurchaseFailure.INSUFFICIENT_STOCK, "buildshop.result.stock_failed_refund_failed");
+                }
                 return PurchaseResult.fail(PurchaseFailure.INSUFFICIENT_STOCK);
             }
+        }
+
+        if (!dispatcher.dispense(plan.quantity)) {
+            if (finite) {
+                stock.restore(product.id(), plan.quantity);
+            }
+            if (!wallet.refund(totalPrice, idemKey)) {
+                LOGGER.error("[Shop] delivery failed AND refund failed: product={} qty={} price={} requestId={}",
+                        product.id(), plan.quantity, totalPrice, request.requestId());
+                return PurchaseResult.fail(PurchaseFailure.DELIVERY_FAILED, "buildshop.result.delivery_failed_refund_failed");
+            }
+            return PurchaseResult.fail(PurchaseFailure.DELIVERY_FAILED);
         }
 
         return PurchaseResult.success(plan.quantity, totalPrice);

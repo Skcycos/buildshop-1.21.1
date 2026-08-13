@@ -232,6 +232,9 @@
         .layout {
             display: grid;
             grid-template-columns: 220px minmax(0, 1fr);
+            /* 行高必须占满剩余空间，否则行高=内容高度，
+               卡片网格永远不会成为内部滚动容器（内容被外层裁掉、滚不下去）。 */
+            grid-template-rows: minmax(0, 1fr);
             gap: 18px;
             flex: 1 1 auto;
             min-height: 0;
@@ -461,7 +464,11 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
             gap: 8px;
-            flex: 1 1 auto;
+            /* AUI 的 fr/百分比高度链在 flex 剩余分配下会溢出（行高取父级 height:100%
+               而非 flex 实际分配值），这里用确定高度 + 固定 flex 主轴，保证卡片
+               网格成为内部滚动容器且不超出屏幕。 */
+            flex: 0 0 auto;
+            height: calc(100vh - 320px);
             min-height: 0;
             margin-top: 10px;
             padding: 1px 1px 14px;

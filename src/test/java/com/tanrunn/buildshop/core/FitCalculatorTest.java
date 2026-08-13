@@ -29,6 +29,36 @@ class FitCalculatorTest {
     }
 
     @Test
+    void incompatibleSlotsContributeNoSpace() {
+        // 不同物品/不同 components 的半满堆叠：不兼容，不得计入可用空间。
+        List<FitCalculator.Slot> slots = List.of(
+                new FitCalculator.Slot(32, 64, false),
+                new FitCalculator.Slot(10, 64, true)
+        );
+        int capacity = FitCalculator.capacity(slots, 64, 34);
+        assertEquals(54 + 34 * 64, capacity);
+    }
+
+    @Test
+    void incompatibleFullStackIsStillIgnored() {
+        List<FitCalculator.Slot> slots = List.of(
+                new FitCalculator.Slot(63, 64, false)
+        );
+        int capacity = FitCalculator.capacity(slots, 64, 1);
+        assertEquals(64, capacity);
+    }
+
+    @Test
+    void compatibleFlagWithDifferentMaxStackUsesSlotMax() {
+        // 兼容堆叠按槽位自身最大堆叠计算剩余空间。
+        List<FitCalculator.Slot> slots = List.of(
+                new FitCalculator.Slot(4, 16, true)
+        );
+        int capacity = FitCalculator.capacity(slots, 64, 0);
+        assertEquals(12, capacity);
+    }
+
+    @Test
     void fitsRequiresExactCapacity() {
         assertTrue(FitCalculator.fits(List.of(), 64, 1, 64));
         assertFalse(FitCalculator.fits(List.of(), 64, 1, 65));

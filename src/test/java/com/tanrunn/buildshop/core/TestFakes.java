@@ -15,10 +15,19 @@ public final class TestFakes {
         private int withdrawCalls;
         private int refundCalls;
         private long lastWithdrawAmount;
+        private String lastWithdrawRequestId;
+        private boolean failRefunds;
         private final java.util.Set<String> withdrawnRequestIds = new java.util.HashSet<>();
+        private final java.util.Set<String> refundedRequestIds = new java.util.HashSet<>();
 
         public FakeWallet(long balance) {
             this.balance = balance;
+        }
+
+        /** 模拟退款失败（发货失败后无法归还金额）。 */
+        public FakeWallet failRefunds() {
+            this.failRefunds = true;
+            return this;
         }
 
         @Override
@@ -35,6 +44,7 @@ public final class TestFakes {
         public boolean withdraw(long amount, String requestId) {
             withdrawCalls++;
             lastWithdrawAmount = amount;
+            lastWithdrawRequestId = requestId;
             if (amount < 0 || balance < amount) return false;
             balance -= amount;
             withdrawnRequestIds.add(requestId);
@@ -44,6 +54,8 @@ public final class TestFakes {
         @Override
         public boolean refund(long amount, String requestId) {
             refundCalls++;
+            refundedRequestIds.add(requestId);
+            if (failRefunds) return false;
             balance += amount;
             return true;
         }
@@ -60,8 +72,16 @@ public final class TestFakes {
             return lastWithdrawAmount;
         }
 
+        public String lastWithdrawRequestId() {
+            return lastWithdrawRequestId;
+        }
+
         public boolean withdrew(String requestId) {
             return withdrawnRequestIds.contains(requestId);
+        }
+
+        public boolean refundedWith(String requestId) {
+            return refundedRequestIds.contains(requestId);
         }
     }
 

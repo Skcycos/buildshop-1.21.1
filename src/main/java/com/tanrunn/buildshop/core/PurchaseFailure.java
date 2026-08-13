@@ -4,8 +4,10 @@ package com.tanrunn.buildshop.core;
 public enum PurchaseFailure {
     PRODUCT_NOT_FOUND,
     PRODUCT_DISABLED,
+    SHOP_DISABLED,
     INVALID_ITEM,
     INVALID_QUANTITY,
+    INVALID_REQUEST,
     INSUFFICIENT_STOCK,
     INSUFFICIENT_BALANCE,
     INSUFFICIENT_INVENTORY,

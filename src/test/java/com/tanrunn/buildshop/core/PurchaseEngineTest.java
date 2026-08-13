@@ -213,6 +213,72 @@ class PurchaseEngineTest {
         assertEquals(0, dispatcher.dispensed());
     }
 
+    @Test
+    void finiteDeliveryFailureRestoresStockAndRefunds() {
+        TestFakes.FakeWallet wallet = wallet(1_000_000L);
+        TestFakes.FakeDispatcher dispatcher = new TestFakes.FakeDispatcher(SERVER_CAP).failDelivery();
+        PurchaseResult result = engine.execute(new PurchaseRequest("finite", PurchaseMode.CUSTOM, 64, REQUEST_ID), wallet, dispatcher);
+        assertFalse(result.success());
+        assertEquals(PurchaseFailure.DELIVERY_FAILED, result.failure());
+        assertEquals(5000, stock.remaining("finite"), "发货失败必须恢复已扣减的库存");
+        assertEquals(1_000_000L, wallet.balance(), "发货失败必须退款");
+        assertEquals(0, dispatcher.dispensed(), "不得留下部分商品");
+    }
+
+    @Test
+    void deliveryFailureWithFailedRefundReportsHonestMessage() {
+        TestFakes.FakeWallet wallet = wallet(1000).failRefunds();
+        TestFakes.FakeDispatcher dispatcher = new TestFakes.FakeDispatcher(SERVER_CAP).failDelivery();
+        PurchaseResult result = engine.execute(new PurchaseRequest("infinite", PurchaseMode.BULK, 0, REQUEST_ID), wallet, dispatcher);
+        assertFalse(result.success());
+        assertEquals(PurchaseFailure.DELIVERY_FAILED, result.failure());
+        assertEquals("buildshop.result.delivery_failed_refund_failed", result.messageKey(),
+                "退款失败时不能无条件告诉玩家已退款");
+        assertEquals(1000 - 2 * 64, wallet.balance(), "退款失败时金额不得凭空归还");
+    }
+
+    @Test
+    void sameRequestIdForDifferentProductsAreIndependentRequests() {
+        TestFakes.FakeWallet wallet = wallet(100000);
+        TestFakes.FakeDispatcher dispatcher = new TestFakes.FakeDispatcher(SERVER_CAP);
+        // 同一 requestId 用于不同商品：互不遮蔽，都正常成交。
+        PurchaseResult first = engine.execute(new PurchaseRequest("infinite", PurchaseMode.SINGLE, 0, "shared-id"), wallet, dispatcher);
+        PurchaseResult second = engine.execute(new PurchaseRequest("bulk16", PurchaseMode.SINGLE, 0, "shared-id"), wallet, dispatcher);
+        assertTrue(first.success());
+        assertTrue(second.success());
+        assertEquals(2, wallet.withdrawCalls(), "两个不同商品应各扣一次款");
+        assertEquals(2, dispatcher.dispenseCalls());
+    }
+
+    @Test
+    void walletReceivesEngineTransactionFingerprintNotRawRequestId() {
+        // 回归：扣款/退款必须携带与引擎幂等语义一致的交易指纹（含商品+模式+数量），
+        // 而不是原始 requestId——否则遵守 API 幂等契约的第三方货币 Provider
+        // 会把"同 requestId 不同商品"误判为已扣款重放，造成发货但未扣款。
+        TestFakes.FakeWallet wallet = wallet(100000);
+        TestFakes.FakeDispatcher dispatcher = new TestFakes.FakeDispatcher(SERVER_CAP);
+
+        PurchaseRequest request = new PurchaseRequest("infinite", PurchaseMode.SINGLE, 0, "shared-id");
+        engine.execute(request, wallet, dispatcher);
+
+        String expected = PurchaseEngine.idempotencyKey(request);
+        assertTrue(wallet.withdrew(expected), "钱包必须收到引擎交易指纹而非原始 requestId: " + wallet.lastWithdrawRequestId());
+        assertFalse(wallet.withdrew("shared-id"), "钱包不得收到原始 requestId");
+    }
+
+    @Test
+    void refundUsesSameTransactionFingerprint() {
+        TestFakes.FakeWallet wallet = wallet(1000);
+        TestFakes.FakeDispatcher dispatcher = new TestFakes.FakeDispatcher(SERVER_CAP).failDelivery();
+        PurchaseRequest request = new PurchaseRequest("infinite", PurchaseMode.BULK, 0, "req-refund-fp");
+
+        engine.execute(request, wallet, dispatcher);
+
+        String expected = PurchaseEngine.idempotencyKey(request);
+        assertTrue(wallet.refundedWith(expected), "退款必须使用与扣款相同的交易指纹");
+        assertFalse(wallet.refundedWith("req-refund-fp"), "退款不得使用原始 requestId");
+    }
+
     // ---------------------------------------------------------- 货币
 
     @Test
