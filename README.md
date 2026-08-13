@@ -11,7 +11,7 @@
 - 虚拟货币与物品货币：已支持
 - 有限库存：已支持（持久化、零库存与未初始化严格区分）
 - 建筑商店 UI：已支持
-- AUI overflow 边框裁剪问题：已整理 issue，见 [AUI_BORDER_CLIPPING_ISSUE.md](AUI_BORDER_CLIPPING_ISSUE.md)
+- ApricityUI 上游问题（服务器加载/握手/边框裁剪/滚动）：已修复并提交 PR，见 [AUI_ISSUES_AND_PRS_REVIEW.md](docs/AUI_ISSUES_AND_PRS_REVIEW.md)
 
 ## 特性
 
@@ -51,12 +51,14 @@
 
 `serverOnly` 会让开发环境中的 ApricityUI 变为 `compileOnly`，避免客户端 UI Mod 被专用服务端加载。生产服务端只安装本 Mod 即可，客户端需要安装 ApricityUI。
 
-> ⚠️ **部署拓扑限制（ApricityUI 1.2.1 上游约束，已实测）**
+> ⚠️ **部署拓扑说明（ApricityUI 上游修复已提交，合入后不再受限）**
 >
-> - ApricityUI 1.2.1 的 `apricityui:*` payload 频道在客户端以**必需（required）**方式注册，服务器若未声明这些频道，客户端会在握手时断开（`Channel ... missing on the server side, but required on the client!`）。
-> - 同时 ApricityUI 1.2.1 **无法在专用服务器上加载**（`AuiServicesBootstrap` 引用客户端 `RenderService`，服务器启动即报 "ApricityUI has failed to load correctly"）。
-> - 因此"无 AUI 的专用服务器 + 带 AUI 的真实客户端"当前**无法完成握手**。这不是本 Mod 的缺陷，而是 ApricityUI 1.2.1 的频道注册策略与服务器端不兼容；需要在 ApricityUI 提供可选频道或服务器端兼容版本后，该部署拓扑才成立。
-> - 当前可行的验收/运行环境：客户端连**集成服务器（单机）**或任何**带 AUI 的服务端**（如 dev 环境的 `runClient` 内嵌服务器）。专用服务器可继续用于验证目录加载、库存初始化、命令与数据持久化（见下文 `runServer` 部分）。
+> ApricityUI 1.2.1 发布版存在两个影响部署的问题：`apricityui:*` payload 频道在客户端以必需（required）方式注册（无 AUI 服务器会拒绝客户端握手），且 ApricityUI 无法在专用服务器上加载（mod 构造崩溃）。两者均已修复并提交上游 PR：
+>
+> - **PR #80**（https://github.com/Tower-of-Sighs/AUI/pull/80）：频道注册改为 optional + 服务器端可加载。合入后以下两种拓扑均可用：
+>   - 专用服务器**不装** AUI + 客户端装 AUI（实测 `Dev joined the game`，商店同步/购买正常）
+>   - 专用服务器**装** AUI + 客户端装 AUI（实测服务器完整加载并注册频道）
+> - 在 PR 合入前（当前 1.2.1 发布版）：客户端请连**集成服务器（单机）**或**带 AUI 的服务端**进行验收；专用服务器仍可用于验证目录加载、库存初始化、命令与数据持久化（`-PserverOnly`）。
 
 ## 游戏内使用
 
@@ -152,6 +154,8 @@ buildingshop/screens/building_shop.html
 
 开发环境会将页面镜像到 `run/apricity/buildingshop/`，配合 ApricityUI 的 `autoReload` 可以在游戏中调试样式。
 
+商店布局说明：`.layout` 使用两列 grid 并显式声明行高（`grid-template-rows: minmax(0, 1fr)`）；商品网格 `.grid` 使用确定高度（`height: calc(100vh - 320px)`）与 `overflow-y: auto` 形成内部滚动，不依赖 ApricityUI 的 fr/剩余空间传递（相关上游限制见 [AUI_FLEX_FR_LAYOUT_ISSUE.md](docs/AUI_FLEX_FR_LAYOUT_ISSUE.md)）。
+
 ## 目录结构
 
 ```text
@@ -187,9 +191,11 @@ GameTest（服务器内集成测试，验证首次库存初始化、跨维度同
 ./gradlew runGameTestServer -PserverOnly
 ```
 
+当前共 **101 个 JUnit 测试**（含真实 Minecraft 类的 SavedData 磁盘往返、物品货币、背包兼容性测试）与 **1 个 GameTest**（9 个场景的顺序流）。
+
 ## 已知问题
 
-- ApricityUI `1.2.1` 在滚动容器中存在首行子元素 `border-top` 被裁剪的问题，具体复现步骤和源码定位见 [AUI_BORDER_CLIPPING_ISSUE.md](AUI_BORDER_CLIPPING_ISSUE.md)。项目不会通过伪元素或额外装饰节点伪造边框来掩盖该问题。
+- ApricityUI `1.2.1` 在滚动容器中首行子元素 `border-top` 被裁剪、以及 `scrollHeight` 不含 padding 的问题：**已修复并提交上游 PR #81**（https://github.com/Tower-of-Sighs/AUI/pull/81），历史复现与源码定位见 [AUI_BORDER_CLIPPING_ISSUE.md](AUI_BORDER_CLIPPING_ISSUE.md)。
 - ApricityUI `1.2.1` 的 flex 子项内部 `fr`/百分比高度会取父级显式 height 而非 flex 实际分配值，导致高度被高估、内容溢出。本项目用确定高度（`calc(100vh - 320px)`）绕过，详见 [AUI_FLEX_FR_LAYOUT_ISSUE.md](docs/AUI_FLEX_FR_LAYOUT_ISSUE.md)。
 - 发现并修复的 AUI 上游问题与已提交 PR 的完整记录（含验证数据、审核关注点）：[AUI_ISSUES_AND_PRS_REVIEW.md](docs/AUI_ISSUES_AND_PRS_REVIEW.md)。
 
