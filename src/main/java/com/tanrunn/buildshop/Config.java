@@ -9,6 +9,13 @@ public class Config {
             .comment("Master switch for the building shop mod")
             .define("enabled", true);
 
+    public static final ModConfigSpec.BooleanValue ENABLE_BUILTIN_EXAMPLE_DATAPACK = BUILDER
+            .comment(
+                    "Enable the built-in example Building Shop datapack.",
+                    "Disable this if you provide your own shop data through external datapacks."
+            )
+            .define("enableBuiltinExampleDatapack", true);
+
     public static final ModConfigSpec.ConfigValue<String> DEFAULT_CURRENCY = BUILDER
             .comment("Default currency id shown in the shop header",
                     "Provided by VirtualCurrencyProvider (virtual_coins) or items:<itemId>")

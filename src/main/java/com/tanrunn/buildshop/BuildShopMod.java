@@ -7,7 +7,12 @@ import com.tanrunn.buildshop.server.ShopCommands;
 import com.tanrunn.buildshop.server.ShopDataLoader;
 import com.tanrunn.buildshop.server.ShopSavedData;
 import com.tanrunn.buildshop.server.ShopServer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -15,6 +20,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -40,12 +46,40 @@ public class BuildShopMod {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
 
+        // 注册内置示例 datapack（由资源配置决定是否启用）
+        modEventBus.addListener(this::addPackFinders);
+
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
         LOGGER.info("{} initialized", MODID);
+    }
+
+    /**
+     * 把随 mod 打包的示例商城数据（resourcepacks/example_shop）注册为内置 datapack，
+     * 放在最低优先级（BOTTOM），可被用户/整合包/世界数据包覆盖。
+     * 配置 {@link Config#ENABLE_BUILTIN_EXAMPLE_DATAPACK} 关闭时完全不注册，
+     * 其余命名空间的服务端数据包照常加载。
+     */
+    private void addPackFinders(AddPackFindersEvent event) {
+        if (event.getPackType() != PackType.SERVER_DATA) {
+            return;
+        }
+        if (!Config.ENABLE_BUILTIN_EXAMPLE_DATAPACK.get()) {
+            LOGGER.info("Built-in example datapack disabled by config");
+            return;
+        }
+        event.addPackFinders(
+                ResourceLocation.fromNamespaceAndPath(MODID, "resourcepacks/example_shop"),
+                PackType.SERVER_DATA,
+                Component.literal("Building Shop Example Data"),
+                PackSource.BUILT_IN,
+                true, // pack 注册后强制启用
+                Pack.Position.BOTTOM // 示例数据放最低优先级，让用户数据包覆盖它
+        );
+        LOGGER.info("Registered built-in Building Shop example datapack");
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
