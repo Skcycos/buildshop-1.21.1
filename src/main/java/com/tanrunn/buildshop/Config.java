@@ -30,11 +30,5 @@ public class Config {
             .comment("Hide categories that contain no products in the shop UI")
             .define("hideEmptyCategories", true);
 
-    public static final ModConfigSpec.BooleanValue LOAD_BUILTIN_DATAPACK = BUILDER
-            .comment("Load the built-in sample datapack bundled with this mod",
-                    "When false, the mod's own data/buildshop sample categories/products are ignored,",
-                    "so the shop only serves content provided by server-side datapacks (other namespaces).")
-            .define("loadBuiltinDatapack", true);
-
     static final ModConfigSpec SPEC = BUILDER.build();
 }

@@ -3,7 +3,6 @@ package com.tanrunn.buildshop.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.tanrunn.buildshop.BuildShopMod;
-import com.tanrunn.buildshop.Config;
 import com.tanrunn.buildshop.core.ProductCatalog;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -30,10 +29,6 @@ import java.util.Map;
  * <p>原子性：分类与商品是两个独立 reload listener，各自 apply 时会得到半份数据。
  * 本类按"同一 reload 周期（同一 ResourceManager 实例）内两个 listener 都完成"才
  * 重建并应用完整目录，避免中间半成品目录或重复初始化库存。</p>
- *
- * <p>内置示例数据包（本 mod 打包的 {@code data/buildshop} 内容）：当
- * {@link Config#LOAD_BUILTIN_DATAPACK} 关闭时被忽略，商店只展示服务端
- * 数据包（其它命名空间）提供的内容。</p>
  */
 public final class ShopDataLoader {
 
@@ -55,9 +50,7 @@ public final class ShopDataLoader {
                 beginEpoch(manager);
                 rawCategories.clear();
                 for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
-                    if (acceptEntry(Config.LOAD_BUILTIN_DATAPACK.get(), entry.getKey())) {
-                        rawCategories.put(entry.getKey().toString(), entry.getValue());
-                    }
+                    rawCategories.put(entry.getKey().toString(), entry.getValue());
                 }
                 categoriesAppliedInEpoch = true;
                 BuildShopMod.LOGGER.info("Shop categories loaded: {}", rawCategories.size());
@@ -73,30 +66,13 @@ public final class ShopDataLoader {
                 beginEpoch(manager);
                 rawProducts.clear();
                 for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
-                    if (acceptEntry(Config.LOAD_BUILTIN_DATAPACK.get(), entry.getKey())) {
-                        rawProducts.put(entry.getKey().toString(), entry.getValue());
-                    }
+                    rawProducts.put(entry.getKey().toString(), entry.getValue());
                 }
                 productsAppliedInEpoch = true;
                 BuildShopMod.LOGGER.info("Shop products loaded: {}", rawProducts.size());
                 rebuildIfReady();
             }
         };
-    }
-
-    /**
-     * 是否接受该资源（纯逻辑，可单测）：配置开启内置示例数据包时全量接受；
-     * 配置关闭时忽略本 mod 命名空间（内置示例包所在）的内容，服务端自备
-     * 数据包（其它命名空间）不受影响。
-     *
-     * @param loadBuiltin {@link Config#LOAD_BUILTIN_DATAPACK} 的值（由调用方读取）
-     * @param key 资源键
-     */
-    static boolean acceptEntry(boolean loadBuiltin, ResourceLocation key) {
-        if (key == null) {
-            return false;
-        }
-        return loadBuiltin || !BuildShopMod.MODID.equals(key.getNamespace());
     }
 
     private void beginEpoch(ResourceManager manager) {
