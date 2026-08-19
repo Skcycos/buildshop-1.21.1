@@ -276,6 +276,31 @@ public final class ShopServer {
         lastRequestTick.clear();
     }
 
+    // ------------------------------------------------------------------ open
+
+    /**
+     * 服务端打开商店界面（命令与公开 API 共用的唯一打开入口）。
+     *
+     * <p>复用 {@link BuildShopNetwork.OpenShopPayload} 网络包。商店总开关关闭时沿用命令语义：
+     * 普通玩家不能打开，具有 2 级权限的管理员仍可打开。必须在服务端主线程调用。</p>
+     *
+     * @return true 表示已接受并下发打开包；player 为 null、不在服务端主线程、
+     *         网络未就绪，或商店关闭且无 2 级权限时返回 false。
+     */
+    public boolean open(ServerPlayer player) {
+        if (player == null || player.server == null || !player.server.isSameThread()) {
+            return false;
+        }
+        if (!Config.ENABLED.get() && !player.hasPermissions(2)) {
+            return false;
+        }
+        if (!isReachable(player, BuildShopNetwork.OpenShopPayload.TYPE)) {
+            return false;
+        }
+        PacketDistributor.sendToPlayer(player, new BuildShopNetwork.OpenShopPayload());
+        return true;
+    }
+
     private void sendPurchaseResult(ServerPlayer player, PurchaseResult result,
                                     Map<String, String> balances, Map<String, Long> balanceAmounts,
                                     Map<String, Integer> stockUpdates, String requestId) {

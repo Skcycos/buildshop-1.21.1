@@ -130,9 +130,9 @@ dependencies {
     // 服务端 dev 运行（./gradlew runServer -PserverOnly）不需要 AUI（客户端专属），
     // 此时降级为 compileOnly 避免 AUI 在专用服务器上被加载。
     if (project.hasProperty('serverOnly')) {
-        compileOnly "com.sighs:ApricityUI-neoforge-1.21.1:1.2.1"
+        compileOnly "com.sighs:ApricityUI-neoforge-1.21.1:1.2.3.1"
     } else {
-        implementation "com.sighs:ApricityUI-neoforge-1.21.1:1.2.1"
+        implementation "com.sighs:ApricityUI-neoforge-1.21.1:1.2.3.1"
     }
 
     // Unit tests for pure logic

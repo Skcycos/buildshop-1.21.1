@@ -68,7 +68,10 @@ public final class ShopScreenController {
     // ------------------------------------------------------------------ open
 
     public void open() {
-        if (Minecraft.getInstance().screen instanceof ApricityScreen) {
+        // 切换守卫：只在“商店自己的 AUI 文档仍存活”时才关闭商店（命令再次触发为切换关闭）。
+        // 不能按“当前屏幕是任意 ApricityScreen”判断——从 Pad（也是 ApricityScreen）启动时
+        // 会误把 Pad 关掉而不打开商店。
+        if (document != null && !document.isDisposed()) {
             Minecraft.getInstance().setScreen(null);
             return;
         }

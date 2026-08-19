@@ -7,9 +7,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.tanrunn.buildshop.BuildShopMod;
 import com.tanrunn.buildshop.Config;
+import com.tanrunn.buildshop.api.BuildingShopApi;
 import com.tanrunn.buildshop.core.Product;
 import com.tanrunn.buildshop.core.ProductCatalog;
-import com.tanrunn.buildshop.network.BuildShopNetwork.OpenShopPayload;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.storage.WorldData;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.resource.ResourcePackLoader;
 
 import java.util.ArrayList;
@@ -80,8 +79,7 @@ public final class ShopCommands {
             return 0;
         }
         ServerPlayer player = ctx.getSource().getPlayerOrException();
-        PacketDistributor.sendToPlayer(player, new OpenShopPayload());
-        return 1;
+        return BuildingShopApi.openPanel(player) ? 1 : 0;
     }
 
     /**
