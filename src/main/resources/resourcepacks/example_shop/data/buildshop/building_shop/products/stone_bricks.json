@@ -2,7 +2,7 @@
   "id": "stone_bricks",
   "item": "minecraft:stone_bricks",
   "categories": ["stone", "building"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 4,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

@@ -99,7 +99,7 @@
 商品和分类位于：
 
 ```text
-src/main/resources/data/buildshop/building_shop/
+src/main/resources/resourcepacks/example_shop/data/buildshop/building_shop/
 ├── categories/
 └── products/
 ```
@@ -113,7 +113,7 @@ src/main/resources/data/buildshop/building_shop/
   "id": "comparator",
   "item": "minecraft:comparator",
   "categories": ["redstone"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 12,
   "bulkSize": 16,
   "stock": { "mode": "finite", "quantity": 500 }

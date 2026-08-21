@@ -2,7 +2,7 @@
   "id": "stone_brick_stairs",
   "item": "minecraft:stone_brick_stairs",
   "categories": ["stairs_slabs", "stone"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 4,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

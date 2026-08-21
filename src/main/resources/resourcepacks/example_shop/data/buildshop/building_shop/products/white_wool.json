@@ -2,7 +2,7 @@
   "id": "white_wool",
   "item": "minecraft:white_wool",
   "categories": ["building", "decoration"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 3,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

@@ -2,7 +2,7 @@
   "id": "sea_lantern",
   "item": "minecraft:sea_lantern",
   "categories": ["light"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 40,
   "bulkSize": 64,
   "stock": { "mode": "finite", "quantity": 800 },

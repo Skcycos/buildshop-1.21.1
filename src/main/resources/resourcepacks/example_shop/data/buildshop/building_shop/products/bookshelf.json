@@ -2,7 +2,7 @@
   "id": "bookshelf",
   "item": "minecraft:bookshelf",
   "categories": ["decoration"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 15,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

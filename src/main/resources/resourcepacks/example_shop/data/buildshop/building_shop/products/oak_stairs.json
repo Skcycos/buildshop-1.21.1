@@ -2,7 +2,7 @@
   "id": "oak_stairs",
   "item": "minecraft:oak_stairs",
   "categories": ["stairs_slabs", "wood"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 3,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

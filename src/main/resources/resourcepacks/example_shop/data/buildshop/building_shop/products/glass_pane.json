@@ -2,7 +2,7 @@
   "id": "glass_pane",
   "item": "minecraft:glass_pane",
   "categories": ["glass"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 3,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

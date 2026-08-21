@@ -2,7 +2,7 @@
   "id": "oak_fence_gate",
   "item": "minecraft:oak_fence_gate",
   "categories": ["fence_gate", "wood"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 5,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

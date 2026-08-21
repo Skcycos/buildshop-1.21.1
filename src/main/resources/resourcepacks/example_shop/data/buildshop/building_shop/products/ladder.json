@@ -2,7 +2,7 @@
   "id": "ladder",
   "item": "minecraft:ladder",
   "categories": ["other"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 1,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

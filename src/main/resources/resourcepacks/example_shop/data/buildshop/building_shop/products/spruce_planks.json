@@ -2,7 +2,7 @@
   "id": "spruce_planks",
   "item": "minecraft:spruce_planks",
   "categories": ["wood", "building"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 2,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

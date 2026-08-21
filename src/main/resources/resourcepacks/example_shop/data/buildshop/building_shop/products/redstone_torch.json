@@ -2,7 +2,7 @@
   "id": "redstone_torch",
   "item": "minecraft:redstone_torch",
   "categories": ["redstone", "light"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 4,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },

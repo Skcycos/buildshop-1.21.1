@@ -2,7 +2,7 @@
   "id": "repeater",
   "item": "minecraft:repeater",
   "categories": ["redstone"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 10,
   "bulkSize": 16,
   "stock": { "mode": "infinite" },

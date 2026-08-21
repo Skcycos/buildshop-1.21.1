@@ -2,12 +2,12 @@
   "id": "bricks",
   "item": "minecraft:bricks",
   "categories": ["building"],
-  "currency": "items:minecraft:emerald",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 1,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },
   "displayName": "红砖",
-  "description": "用绿宝石支付的建材（物品货币示例）",
+  "description": "常用的基础砖石建筑材料",
   "enabled": true,
   "sort": 50
 }

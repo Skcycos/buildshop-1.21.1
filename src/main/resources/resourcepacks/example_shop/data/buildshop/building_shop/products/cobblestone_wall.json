@@ -2,7 +2,7 @@
   "id": "cobblestone_wall",
   "item": "minecraft:cobblestone_wall",
   "categories": ["fence_gate", "stone"],
-  "currency": "virtual_coins",
+  "currency": "server_menu:lc_bank_main",
   "unitPrice": 2,
   "bulkSize": 64,
   "stock": { "mode": "infinite" },
