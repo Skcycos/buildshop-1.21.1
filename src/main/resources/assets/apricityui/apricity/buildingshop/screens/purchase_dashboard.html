@@ -72,12 +72,18 @@
 
         .head-actions { display: flex; gap: 8px; }
         button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             min-height: 36px;
             padding: 0 14px;
             color: var(--jade-dark);
             background: var(--white);
             border: 1px solid var(--line);
             font: inherit;
+            line-height: 1.2;
+            text-align: center;
+            white-space: nowrap;
             cursor: pointer;
         }
         button:hover { color: var(--white); background: var(--jade); border-color: var(--jade-dark); }
