@@ -67,7 +67,7 @@
 
         .masthead {
             display: grid;
-            grid-template-columns: minmax(270px, 1.1fr) minmax(190px, 0.65fr) minmax(260px, 1fr) auto;
+            grid-template-columns: minmax(270px, 1.1fr) minmax(190px, 0.65fr) minmax(260px, 1fr) 92px;
             grid-template-areas: "brand balance search actions";
             align-items: stretch;
             gap: 14px;
@@ -215,6 +215,9 @@
         .search::placeholder { color: var(--ink-light); }
 
         .refresh-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             align-self: stretch;
             min-width: 0;
             height: auto;
@@ -229,6 +232,8 @@
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 1px;
+            line-height: 1.2;
+            white-space: nowrap;
         }
 
         .refresh-button:hover {
@@ -242,15 +247,16 @@
 
         .header-actions {
             grid-area: actions;
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
             gap: 14px;
-            min-width: 84px;
+            width: 92px;
+            min-width: 92px;
         }
 
         .header-actions .refresh-button {
-            flex: 1 1 0;
             width: 100%;
+            height: 100%;
         }
 
         .layout {
@@ -753,6 +759,10 @@
                     "balance actions"
                     "search search";
             }
+            .header-actions {
+                width: 100%;
+                min-width: 0;
+            }
         }
 
         @media (max-width: 720px) {
@@ -764,6 +774,10 @@
                     "balance"
                     "search"
                     "actions";
+            }
+            .header-actions {
+                width: 100%;
+                min-width: 0;
             }
             .layout { grid-template-columns: 1fr; }
             .side-panel { position: static; }
