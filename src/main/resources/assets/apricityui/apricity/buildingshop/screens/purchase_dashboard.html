@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="aui-font-mode" content="web">
+    <meta name="aui-viewport" content="mode=browser">
+    <meta name="aui-mouse-events" content="intercept">
+    <title>营造司 · 购买看板</title>
+    <style>
+        :root {
+            --paper: #f3ecdf;
+            --paper-light: #fbf8f0;
+            --paper-deep: #e8ddca;
+            --line: #d6c8b1;
+            --ink: #303832;
+            --muted: #77766d;
+            --jade: #3f6d60;
+            --jade-dark: #2d5147;
+            --jade-soft: #e4eee8;
+            --red: #a84f42;
+            --red-dark: #883b32;
+            --gold: #ad7b28;
+            --gold-soft: #f4e9cc;
+            --white: #fffdf8;
+            --shadow: rgba(75, 56, 33, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; min-height: 0; overflow: hidden; }
+        body {
+            color: var(--ink);
+            background:
+                linear-gradient(90deg, rgba(120, 92, 50, 0.035) 1px, transparent 1px) 0 0 / 22px 22px,
+                linear-gradient(rgba(120, 92, 50, 0.028) 1px, transparent 1px) 0 0 / 22px 22px,
+                var(--paper);
+            font-family: "buildshop-ui", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun", sans-serif;
+            font-size: 14px;
+        }
+
+        .dashboard-shell {
+            width: min(1440px, 100%);
+            height: 100%;
+            min-height: 0;
+            margin: 0 auto;
+            padding: 24px 28px 26px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .dashboard-head {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .eyebrow, .kicker {
+            margin: 0 0 5px;
+            color: var(--red);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        h1, h2, p { margin: 0; }
+        h1 { color: var(--jade-dark); font-size: 28px; letter-spacing: 3px; }
+        .subtitle { margin-top: 6px; color: var(--muted); font-size: 12px; letter-spacing: 1px; }
+
+        .head-actions { display: flex; gap: 8px; }
+        button {
+            min-height: 36px;
+            padding: 0 14px;
+            color: var(--jade-dark);
+            background: var(--white);
+            border: 1px solid var(--line);
+            font: inherit;
+            cursor: pointer;
+        }
+        button:hover { color: var(--white); background: var(--jade); border-color: var(--jade-dark); }
+        button.primary { color: var(--white); background: var(--red); border-color: var(--red-dark); }
+
+        .summary-grid {
+            flex: 0 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            padding: 16px 0;
+        }
+        .summary-card, .panel {
+            border: 1px solid var(--line);
+            background: var(--white);
+            box-shadow: 4px 4px 0 var(--shadow);
+        }
+        .summary-card { min-height: 86px; padding: 13px 15px; border-left: 4px solid var(--jade); }
+        .summary-card:nth-child(2) { border-left-color: var(--red); }
+        .summary-card:nth-child(3) { border-left-color: var(--gold); }
+        .summary-card:nth-child(4) { border-left-color: #7d8f85; }
+        .summary-label { color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+        .summary-value { display: block; margin-top: 7px; color: var(--jade-dark); font-size: 24px; font-weight: 700; }
+
+        .dashboard-grid {
+            min-height: 0;
+            flex: 1 1 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+            grid-template-rows: minmax(235px, 0.95fr) minmax(220px, 1fr);
+            gap: 14px;
+        }
+        .panel { min-height: 0; padding: 15px 17px; overflow: hidden; }
+        .panel.wide { grid-row: 1 / span 2; display: flex; flex-direction: column; }
+        .panel-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .panel-title h2 { color: var(--jade-dark); font-size: 17px; letter-spacing: 1px; }
+        .panel-note { color: var(--muted); font-size: 11px; }
+
+        #daily-chart {
+            min-height: 0;
+            flex: 1 1 auto;
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            padding: 18px 4px 0;
+        }
+        .day-column { min-width: 0; flex: 1 1 0; display: flex; flex-direction: column; align-items: center; }
+        .day-value { height: 18px; color: var(--red); font-size: 10px; white-space: nowrap; }
+        .day-track { width: min(34px, 70%); min-height: 120px; flex: 1 1 auto; display: flex; align-items: flex-end; background: var(--paper-deep); }
+        .day-fill { width: 100%; min-height: 3px; background: linear-gradient(180deg, var(--red), var(--red-dark)); }
+        .day-label { padding-top: 8px; color: var(--muted); font-size: 10px; white-space: nowrap; transform: rotate(-25deg); transform-origin: top center; }
+
+        #category-chart { padding-top: 18px; }
+        .category-row { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+        .category-name { width: 68px; overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+        .category-track { height: 9px; flex: 1 1 auto; background: var(--paper-deep); }
+        .category-fill { height: 100%; background: var(--jade); }
+        .category-amount { width: 50px; color: var(--red); font-size: 11px; text-align: right; }
+
+        #purchase-records { min-height: 0; flex: 1 1 auto; overflow: hidden; padding-top: 10px; }
+        .record-row { display: flex; align-items: center; gap: 11px; min-height: 57px; padding: 8px 0; border-bottom: 1px solid var(--paper-deep); }
+        .record-marker { width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 30px; color: var(--white); background: var(--red); font-weight: 700; }
+        .record-copy { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
+        .record-copy strong { overflow: hidden; color: var(--jade-dark); text-overflow: ellipsis; white-space: nowrap; }
+        .record-copy span { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+        .record-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; white-space: nowrap; }
+        .record-amount strong { color: var(--jade-dark); }
+        .record-amount span { color: var(--red); font-size: 11px; }
+        .dashboard-empty { padding: 32px 10px; color: var(--muted); text-align: center; }
+
+        .footer { flex: 0 0 auto; padding-top: 12px; color: var(--muted); font-size: 11px; }
+
+        @media (max-width: 900px) {
+            .dashboard-shell { padding: 16px; }
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .dashboard-grid { grid-template-columns: 1fr; grid-template-rows: 260px 220px minmax(260px, 1fr); overflow: auto; }
+            .panel.wide { grid-row: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-shell">
+    <header class="dashboard-head">
+        <div>
+            <p class="eyebrow">BUILDING SHOP · LEDGER</p>
+            <h1>营造司 · 购买看板</h1>
+            <p class="subtitle">把每一次材料调配，整理成一页可回看的营造账目。</p>
+        </div>
+        <div class="head-actions">
+            <button id="dashboard-back" type="button">← 返回建材库</button>
+            <button id="dashboard-refresh" class="primary" type="button">↻ 刷新本地记录</button>
+        </div>
+    </header>
+
+    <section class="summary-grid">
+        <div class="summary-card"><span class="summary-label">累计支出</span><strong id="dashboard-total" class="summary-value">—</strong></div>
+        <div class="summary-card"><span class="summary-label">购买笔数</span><strong id="dashboard-orders" class="summary-value">—</strong></div>
+        <div class="summary-card"><span class="summary-label">调配总量</span><strong id="dashboard-quantity" class="summary-value">—</strong></div>
+        <div class="summary-card"><span class="summary-label">主要工种</span><strong id="dashboard-top-category" class="summary-value">—</strong></div>
+    </section>
+
+    <main class="dashboard-grid">
+        <section class="panel wide">
+            <div class="panel-title"><h2>最近购买记录</h2><span class="panel-note">客户端最近 200 笔成功购买</span></div>
+            <div id="purchase-records"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-title"><h2>七日支出</h2><span class="panel-note">按游戏日统计</span></div>
+            <div id="daily-chart"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-title"><h2>工种分布</h2><span class="panel-note">累计支出</span></div>
+            <div id="category-chart"></div>
+        </section>
+    </main>
+    <div class="footer">营造司 · 数据来自本客户端购买成功回执；服务器经济数据仍以服务端为准。</div>
+</div>
+</body>
+</html>

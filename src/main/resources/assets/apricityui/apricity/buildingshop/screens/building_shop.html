@@ -68,6 +68,10 @@
         .masthead {
             display: grid;
             grid-template-columns: minmax(270px, 1.1fr) minmax(190px, 0.65fr) minmax(260px, 1fr) auto;
+            grid-template-rows: auto auto;
+            grid-template-areas:
+                "brand balance search refresh"
+                "dashboard . . .";
             align-items: stretch;
             gap: 14px;
             flex: 0 0 auto;
@@ -76,6 +80,7 @@
         }
 
         .brand {
+            grid-area: brand;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -147,6 +152,7 @@
         }
 
         .balance-card {
+            grid-area: balance;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -180,6 +186,7 @@
         }
 
         .search-card {
+            grid-area: search;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -211,6 +218,7 @@
         .search::placeholder { color: var(--ink-light); }
 
         .refresh-button {
+            grid-area: refresh;
             align-self: center;
             min-width: 78px;
             height: 42px;
@@ -228,6 +236,13 @@
 
         .refresh-button:hover { background: var(--jade-dark); }
         .refresh-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(45, 81, 71, 0.2); }
+
+        .dashboard-button {
+            grid-area: dashboard;
+            width: 100%;
+            min-width: 0;
+            align-self: stretch;
+        }
 
         .layout {
             display: grid;
@@ -723,12 +738,27 @@
 
         @media (max-width: 1040px) {
             .masthead { grid-template-columns: 1fr 1fr; }
-            .brand { grid-column: 1 / -1; }
+            .masthead {
+                grid-template-areas:
+                    "brand brand"
+                    "dashboard dashboard"
+                    "balance search"
+                    "refresh refresh";
+            }
             .refresh-button { align-self: stretch; height: auto; }
         }
 
         @media (max-width: 720px) {
             .shop-shell { padding: 17px 14px; }
+            .masthead {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "brand"
+                    "dashboard"
+                    "balance"
+                    "search"
+                    "refresh";
+            }
             .layout { grid-template-columns: 1fr; }
             .side-panel { position: static; }
             #categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -742,8 +772,6 @@
         }
 
         @media (max-width: 480px) {
-            .masthead { grid-template-columns: 1fr; }
-            .brand { grid-column: auto; }
             .brand-title { font-size: 23px; }
             .refresh-button { min-height: 40px; }
             .grid { grid-template-columns: 1fr; }
@@ -773,6 +801,7 @@
             </label>
 
             <button id="refresh" class="refresh-button" type="button">↻ 刷新</button>
+            <button id="dashboard" class="refresh-button dashboard-button" type="button">▥ 购买看板</button>
         </header>
 
         <div class="layout">

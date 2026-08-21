@@ -57,12 +57,16 @@ public final class ShopScreenController {
     private String searchText = "";
     private String qtyDialogProductId;
     private SortMode sortMode = SortMode.DEFAULT;
+    private final Map<String, PendingPurchase> pendingPurchases = new LinkedHashMap<>();
 
     private ShopScreenController() {
     }
 
     private enum SortMode {
         DEFAULT, PRICE_ASC, PRICE_DESC
+    }
+
+    private record PendingPurchase(ProductDto product) {
     }
 
     // ------------------------------------------------------------------ open
@@ -81,6 +85,12 @@ public final class ShopScreenController {
             bind(apricityScreen.getLinkedDocument());
         }
         PacketDistributor.sendToServer(new RequestSyncPayload());
+    }
+
+    /** 从购买看板返回时强制新建商店页面，避免旧 Document 的切换守卫误判。 */
+    public void reopen() {
+        document = null;
+        open();
     }
 
     private void bind(Document linked) {
@@ -136,6 +146,7 @@ public final class ShopScreenController {
         Element products = doc.getElementById("products");
         Element search = doc.getElementById("search");
         Element refresh = doc.getElementById("refresh");
+        Element dashboard = doc.getElementById("dashboard");
         Element hint = doc.getElementById("hint");
         Element balance = doc.getElementById("balance");
         Element balanceLabel = doc.getElementById("balance-label");
@@ -162,6 +173,9 @@ public final class ShopScreenController {
         }
         if (refresh != null) {
             refresh.addEventListener("click", event -> PacketDistributor.sendToServer(new RequestSyncPayload()));
+        }
+        if (dashboard != null) {
+            dashboard.addEventListener("click", event -> PurchaseDashboardController.INSTANCE.open());
         }
         Element sortButtons = doc.getElementById("sort-buttons");
         if (sortButtons != null) {
@@ -550,11 +564,19 @@ public final class ShopScreenController {
     }
 
     private void sendPurchase(String productId, PurchaseMode mode, int quantity) {
+        String requestId = UUID.randomUUID().toString();
+        ProductDto product = model.product(productId);
+        if (product != null) {
+            pendingPurchases.put(requestId, new PendingPurchase(product));
+            while (pendingPurchases.size() > 32) {
+                pendingPurchases.remove(pendingPurchases.keySet().iterator().next());
+            }
+        }
         PacketDistributor.sendToServer(new PurchaseRequestPayload(
                 productId,
                 (byte) mode.ordinal(),
                 quantity,
-                UUID.randomUUID().toString()
+                requestId
         ));
     }
 
@@ -670,6 +692,22 @@ public final class ShopScreenController {
      */
     public void applyPurchaseResult(PurchaseResultPayload payload) {
         if (payload == null) return;
+        PendingPurchase pending = pendingPurchases.remove(payload.requestId());
+        if (payload.success() && pending != null && payload.quantity() > 0) {
+            ProductDto product = pending.product();
+            long gameTime = Minecraft.getInstance().level == null
+                    ? 0
+                    : Minecraft.getInstance().level.getGameTime();
+            ClientPurchaseHistory.INSTANCE.add(new ClientPurchaseRecord(
+                    gameTime / 24_000L,
+                    gameTime,
+                    product.id(),
+                    product.displayName(),
+                    primaryCategoryName(product),
+                    model.currencyName(product.currency()),
+                    payload.quantity(),
+                    payload.totalPrice()));
+        }
         model.applyBalanceUpdates(payload.balances(), payload.balanceAmounts());
         if (payload.stockUpdates() != null) {
             payload.stockUpdates().forEach(model::applyStockUpdate);
@@ -691,6 +729,15 @@ public final class ShopScreenController {
         if (qtyDialogProductId != null) {
             hideQtyDialog();
         }
+    }
+
+    private String primaryCategoryName(ProductDto product) {
+        if (product.categories().isEmpty()) return "未分类";
+        String id = product.categories().get(0);
+        for (CategoryDto category : model.categories()) {
+            if (category.id().equals(id)) return category.name();
+        }
+        return id;
     }
 
     // ------------------------------------------------------------------ status
