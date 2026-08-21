@@ -68,10 +68,7 @@
         .masthead {
             display: grid;
             grid-template-columns: minmax(270px, 1.1fr) minmax(190px, 0.65fr) minmax(260px, 1fr) auto;
-            grid-template-rows: auto auto;
-            grid-template-areas:
-                "brand balance search refresh"
-                "dashboard . . .";
+            grid-template-areas: "brand balance search actions";
             align-items: stretch;
             gap: 14px;
             flex: 0 0 auto;
@@ -218,10 +215,10 @@
         .search::placeholder { color: var(--ink-light); }
 
         .refresh-button {
-            grid-area: refresh;
-            align-self: center;
-            min-width: 78px;
-            height: 42px;
+            align-self: stretch;
+            min-width: 0;
+            height: auto;
+            min-height: 0;
             padding: 0 15px;
             color: #fffaf0;
             background: var(--jade);
@@ -237,11 +234,17 @@
         .refresh-button:hover { background: var(--jade-dark); }
         .refresh-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(45, 81, 71, 0.2); }
 
-        .dashboard-button {
-            grid-area: dashboard;
+        .header-actions {
+            grid-area: actions;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 84px;
+        }
+
+        .header-actions .refresh-button {
+            flex: 1 1 0;
             width: 100%;
-            min-width: 0;
-            align-self: stretch;
         }
 
         .layout {
@@ -741,11 +744,9 @@
             .masthead {
                 grid-template-areas:
                     "brand brand"
-                    "dashboard dashboard"
-                    "balance search"
-                    "refresh refresh";
+                    "balance actions"
+                    "search search";
             }
-            .refresh-button { align-self: stretch; height: auto; }
         }
 
         @media (max-width: 720px) {
@@ -754,10 +755,9 @@
                 grid-template-columns: 1fr;
                 grid-template-areas:
                     "brand"
-                    "dashboard"
                     "balance"
                     "search"
-                    "refresh";
+                    "actions";
             }
             .layout { grid-template-columns: 1fr; }
             .side-panel { position: static; }
@@ -773,7 +773,6 @@
 
         @media (max-width: 480px) {
             .brand-title { font-size: 23px; }
-            .refresh-button { min-height: 40px; }
             .grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -800,8 +799,10 @@
                 <input id="search" class="search" type="search" placeholder="输入名称、用途或商品编号…">
             </label>
 
-            <button id="refresh" class="refresh-button" type="button">↻ 刷新</button>
-            <button id="dashboard" class="refresh-button dashboard-button" type="button">▥ 购买看板</button>
+            <div class="header-actions">
+                <button id="refresh" class="refresh-button" type="button">↻ 刷新</button>
+                <button id="dashboard" class="refresh-button" type="button">▥ 看板</button>
+            </div>
         </header>
 
         <div class="layout">
