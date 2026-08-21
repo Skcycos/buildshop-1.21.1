@@ -220,10 +220,10 @@
             height: auto;
             min-height: 0;
             padding: 0 15px;
-            color: #fffaf0;
-            background: var(--jade);
-            border: 1px solid var(--jade-dark);
-            box-shadow: 3px 3px 0 rgba(45, 81, 71, 0.2);
+            color: var(--ink-muted);
+            background: var(--white);
+            border: 1px solid var(--paper-line);
+            box-shadow: 4px 4px 0 var(--shadow);
             cursor: pointer;
             font-family: inherit;
             font-size: 13px;
@@ -231,8 +231,14 @@
             letter-spacing: 1px;
         }
 
-        .refresh-button:hover { background: var(--jade-dark); }
-        .refresh-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(45, 81, 71, 0.2); }
+        .refresh-button:hover {
+            color: var(--ink);
+            background: var(--paper-light);
+        }
+        .refresh-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow);
+        }
 
         .header-actions {
             grid-area: actions;
