@@ -120,7 +120,25 @@ src/main/resources/resourcepacks/example_shop/data/buildshop/building_shop/
 }
 ```
 
-- 有限库存解析校验：`quantity`/`bulkSize` 必须为非负整数，`unitPrice` 必须为正数，`item` 必须是合法的资源 ID；出错条目会被跳过并记录包含文件/商品 ID 的日志，不会导致整个目录重载失败。
+- 商品目标必须在 `item` 与 `entity` 中二选一，且必须是合法的资源 ID。使用 `item` 时按原逻辑发到背包；使用 `entity` 时购买后会在玩家水平半径 5 格内寻找安全位置并立即生成生物，不占用背包空间。
+- 生物商品的 UI 图标自动使用对应的生物蛋；目标实体没有生物蛋时图标留空，但仍可以正常购买和生成。客户端缺少对应实体类型时会显示不可用提示。
+- 生物商品示例：
+
+```json
+{
+  "id": "cow",
+  "entity": "minecraft:cow",
+  "categories": ["animals"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 25,
+  "bulkSize": 2,
+  "stock": { "mode": "infinite" },
+  "displayName": "奶牛",
+  "description": "在玩家附近生成一只奶牛"
+}
+```
+
+- 有限库存解析校验：`quantity`/`bulkSize` 必须为非负整数，`unitPrice` 必须为正数；出错条目会被跳过并记录包含文件/商品 ID 的日志，不会导致整个目录重载失败。
 - 修改资源后可使用 `/buildingshop reload` 重载服务端数据。
 
 ### 有限库存持久化行为

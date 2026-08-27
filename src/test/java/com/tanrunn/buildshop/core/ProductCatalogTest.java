@@ -70,6 +70,30 @@ class ProductCatalogTest {
     }
 
     @Test
+    void loadsEntityProductsFromJson() {
+        Map<String, JsonElement> products = one("cow", """
+                {
+                  "id": "cow",
+                  "entity": "minecraft:cow",
+                  "categories": ["animals"],
+                  "currency": "virtual_coins",
+                  "unitPrice": 25,
+                  "bulkSize": 2,
+                  "displayName": "奶牛",
+                  "description": "在身边生成一只奶牛",
+                  "enabled": true
+                }
+                """);
+        ProductCatalog catalog = ProductCatalog.fromJson(Map.of(), products);
+        Product product = catalog.product("cow").orElseThrow();
+        assertTrue(product.isEntityProduct());
+        assertEquals("minecraft:cow", product.entityId());
+        assertEquals("", product.itemId());
+        assertEquals(2, product.bulkSize());
+        assertEquals("奶牛", product.effectiveName());
+    }
+
+    @Test
     void productBelongsToMultipleCategories() {
         Map<String, JsonElement> products = one("p", """
                 {"id":"p","item":"minecraft:oak_planks","categories":["wood","building","redstone"],"unitPrice":1}
@@ -89,6 +113,8 @@ class ProductCatalogTest {
     void invalidProductsAreSkipped() {
         Map<String, JsonElement> products = Map.of(
                 "missing_item", JsonParser.parseString("{\"unitPrice\":2}"),
+                "both_targets", JsonParser.parseString(
+                        "{\"item\":\"minecraft:stone\",\"entity\":\"minecraft:cow\",\"unitPrice\":2}"),
                 "missing_price", JsonParser.parseString("{\"item\":\"minecraft:stone\"}"),
                 "bad_price", JsonParser.parseString("{\"item\":\"minecraft:stone\",\"unitPrice\":-3}"),
                 "ok", JsonParser.parseString("{\"item\":\"minecraft:stone\",\"unitPrice\":3}")

@@ -35,9 +35,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
@@ -202,15 +204,25 @@ public final class ShopServer {
             return result;
         }
 
-        ItemStack template = buildItemStack(product);
-        if (template.isEmpty() && !product.itemId().equals("minecraft:air")) {
-            PurchaseResult result = PurchaseResult.fail(PurchaseFailure.INVALID_ITEM);
-            sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
-            return result;
-        }
-
         Wallet wallet = new ProviderWallet(player, currency);
-        ItemDispatcher dispatcher = new InventoryDispatcher(player, template);
+        ItemDispatcher dispatcher;
+        if (product.isEntityProduct()) {
+            EntityType<?> entityType = resolveEntityType(product);
+            if (entityType == null || !entityType.canSummon()) {
+                PurchaseResult result = PurchaseResult.fail(PurchaseFailure.INVALID_ENTITY);
+                sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
+                return result;
+            }
+            dispatcher = new EntityDispatcher(player, entityType);
+        } else {
+            ItemStack template = buildItemStack(product);
+            if (template.isEmpty() && !product.itemId().equals("minecraft:air")) {
+                PurchaseResult result = PurchaseResult.fail(PurchaseFailure.INVALID_ITEM);
+                sendPurchaseResult(player, result, Map.of(), Map.of(), Map.of(), requestId);
+                return result;
+            }
+            dispatcher = new InventoryDispatcher(player, template);
+        }
 
         PlayerIdempotency idem = idempotencyByPlayer.computeIfAbsent(player.getUUID(), key -> new PlayerIdempotency());
         PurchaseEngine engine = new PurchaseEngine(catalog, stockStore, idem, Config.SERVER_MAX_PER_REQUEST.get());
@@ -352,8 +364,10 @@ public final class ShopServer {
 
         List<ProductDto> products = new ArrayList<>();
         for (Product product : catalog().enabledProducts()) {
-            ItemStack template = buildItemStack(product);
-            String expression = serializeStack(template);
+            ItemStack icon = product.isEntityProduct()
+                    ? buildEntityIconStack(product)
+                    : buildItemStack(product);
+            String expression = serializeStack(icon);
             ProductDto dto = ProductDto.from(product, formatPrice(product.currency(), product.unitPrice()),
                     stockStore.remaining(product.id()))
                     .withItemExpression(expression);
@@ -410,6 +424,7 @@ public final class ShopServer {
 
     /** 由商品定义构建 ItemStack（应用组件）。 */
     public ItemStack buildItemStack(Product product) {
+        if (product == null || product.isEntityProduct()) return ItemStack.EMPTY;
         ResourceLocation itemId = ResourceLocation.tryParse(product.itemId());
         if (itemId == null || !BuiltInRegistries.ITEM.containsKey(itemId)) {
             return ItemStack.EMPTY;
@@ -422,6 +437,21 @@ public final class ShopServer {
                     .ifPresent(stack::applyComponents);
         }
         return stack;
+    }
+
+    /** 生物商品使用对应的 Spawn Egg 作为 UI 图标；没有蛋时返回空图标。 */
+    private ItemStack buildEntityIconStack(Product product) {
+        EntityType<?> entityType = resolveEntityType(product);
+        if (entityType == null) return ItemStack.EMPTY;
+        SpawnEggItem spawnEgg = SpawnEggItem.byId(entityType);
+        return spawnEgg == null ? ItemStack.EMPTY : new ItemStack(spawnEgg);
+    }
+
+    private EntityType<?> resolveEntityType(Product product) {
+        if (product == null || !product.isEntityProduct()) return null;
+        ResourceLocation entityId = ResourceLocation.tryParse(product.entityId());
+        if (entityId == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(entityId)) return null;
+        return BuiltInRegistries.ENTITY_TYPE.get(entityId);
     }
 
     /** 序列化为 {@code {id,count,components}} SNBT，供 AUI &lt;item&gt; 元素渲染。 */

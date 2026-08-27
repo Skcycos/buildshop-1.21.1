@@ -399,7 +399,7 @@ public final class ShopScreenController {
         }
         Element desc = card.children.size() > 2 ? card.children.get(2) : null;
         if (desc != null) {
-            if (!itemAvailable(product)) {
+            if (!deliveryAvailable(product)) {
                 desc.setTextContent(Component.translatable("buildshop.ui.item_unavailable").getString());
             } else {
                 desc.setTextContent(product.description() == null ? "" : product.description());
@@ -439,7 +439,7 @@ public final class ShopScreenController {
         if (balance < product.unitPrice()) {
             return Component.translatable("buildshop.ui.warn.balance").getString();
         }
-        if (freeSpaceFor(product) < 1) {
+        if (!product.isEntityProduct() && freeSpaceFor(product) < 1) {
             return Component.translatable("buildshop.ui.warn.inventory").getString();
         }
         return null;
@@ -471,6 +471,7 @@ public final class ShopScreenController {
      * 最大堆叠估算与服务端一致；解析失败回退为注册表默认物品（服务端仍是最终权威）。
      */
     private ItemStack clientTemplate(ProductDto product) {
+        if (product.isEntityProduct()) return ItemStack.EMPTY;
         if (product.itemExpression() != null && !product.itemExpression().isBlank()) {
             ItemStack parsed = ItemStackExpressionCompiler.parse(product.itemExpression());
             if (!parsed.isEmpty()) {
@@ -482,14 +483,22 @@ public final class ShopScreenController {
         return new ItemStack(BuiltInRegistries.ITEM.get(id));
     }
 
-    private boolean itemAvailable(ProductDto product) {
+    private boolean deliveryAvailable(ProductDto product) {
+        if (product.isEntityProduct()) {
+            if (product.entityId() == null || product.entityId().isBlank()) return false;
+            ResourceLocation id = ResourceLocation.tryParse(product.entityId());
+            return id != null && BuiltInRegistries.ENTITY_TYPE.containsKey(id);
+        }
         if (product.itemId() == null || product.itemId().isBlank()) return false;
         ResourceLocation id = ResourceLocation.tryParse(product.itemId());
         return id != null && BuiltInRegistries.ITEM.containsKey(id);
     }
 
     private String resolveItemExpression(ProductDto product) {
-        return ItemExpressionUtil.resolveExpression(product.itemId(), product.itemExpression(), itemAvailable(product));
+        return ItemExpressionUtil.resolveExpression(
+                product.isEntityProduct() ? "" : product.itemId(),
+                product.itemExpression(),
+                deliveryAvailable(product));
     }
 
     // ------------------------------------------------------------------ clicks

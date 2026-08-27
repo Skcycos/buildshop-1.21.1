@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ShopClientModelTest {
 
     private static ProductDto comparator(int stockRemaining) {
-        return new ProductDto("comparator", "minecraft:comparator", null, "红石比较器", "",
+        return new ProductDto("comparator", "minecraft:comparator", "", null, "红石比较器", "",
                 "virtual_coins", 12, "12 金币", 16, 64, StockMode.FINITE, stockRemaining,
                 true, List.of("redstone"), 20);
     }

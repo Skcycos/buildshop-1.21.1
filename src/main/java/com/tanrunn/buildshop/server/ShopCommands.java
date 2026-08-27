@@ -141,7 +141,11 @@ public final class ShopCommands {
             return 0;
         }
         ctx.getSource().sendSuccess(() -> Component.literal(product.effectiveName() + " [" + product.id() + "]"), false);
-        ctx.getSource().sendSuccess(() -> Component.translatable("buildshop.command.info.item", product.itemId()), false);
+        String targetKey = product.isEntityProduct()
+                ? "buildshop.command.info.entity"
+                : "buildshop.command.info.item";
+        String targetId = product.isEntityProduct() ? product.entityId() : product.itemId();
+        ctx.getSource().sendSuccess(() -> Component.translatable(targetKey, targetId), false);
         ctx.getSource().sendSuccess(() -> Component.translatable("buildshop.command.info.price",
                 ShopServer.INSTANCE.formatPrice(product.currency(), product.unitPrice()),
                 product.currency()), false);

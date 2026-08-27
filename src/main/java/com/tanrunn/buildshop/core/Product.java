@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 /**
  * 商品定义（纯数据，无 Minecraft 依赖）。
  *
- * <p>价格按单个物品计算（整数最小单位）。{@code components} 保留原始 JSON 以便
- * 服务端构造真实 ItemStack。</p>
+ * <p>价格按单个商品计算（整数最小单位）。商品可以是物品或生物；物品的
+ * {@code components} 保留原始 JSON 以便服务端构造真实 ItemStack。</p>
  *
  * <p>商品 ID 优先取 JSON 的 {@code id} 字段（稳定、跨 namespace 可区分）；
  * 缺省时回退为数据包资源键 {@code namespace:path}。解析对错误字段健壮：
@@ -26,6 +26,7 @@ public final class Product {
 
     private final String id;
     private final String itemId;
+    private final String entityId;
     private final JsonElement components;
     private final List<String> categories;
     private final String currency;
@@ -42,6 +43,7 @@ public final class Product {
     private Product(Builder builder) {
         this.id = builder.id;
         this.itemId = builder.itemId;
+        this.entityId = builder.entityId;
         this.components = builder.components;
         this.categories = List.copyOf(builder.categories);
         this.currency = builder.currency == null || builder.currency.isBlank() ? CURRENCY_DEFAULT : builder.currency;
@@ -75,12 +77,19 @@ public final class Product {
         }
 
         String itemId = optString(json, "item", "");
-        if (itemId.isBlank()) {
-            errors.add(prefix + "missing or empty 'item'");
+        String entityId = optString(json, "entity", "");
+        boolean hasItem = !itemId.isBlank();
+        boolean hasEntity = !entityId.isBlank();
+        if (hasItem == hasEntity) {
+            errors.add(prefix + "requires exactly one non-empty 'item' or 'entity'");
             return null;
         }
-        if (!isValidItemId(itemId)) {
+        if (hasItem && !isValidItemId(itemId)) {
             errors.add(prefix + "invalid 'item' id '" + itemId + "'");
+            return null;
+        }
+        if (hasEntity && !isValidItemId(entityId)) {
+            errors.add(prefix + "invalid 'entity' id '" + entityId + "'");
             return null;
         }
 
@@ -157,6 +166,7 @@ public final class Product {
         }
 
         return new Builder(id, itemId)
+                .entityId(entityId)
                 .components(json.get("components"))
                 .categories(categories)
                 .currency(optString(json, "currency", CURRENCY_DEFAULT))
@@ -177,6 +187,15 @@ public final class Product {
 
     public String itemId() {
         return itemId;
+    }
+
+    /** 生物商品的实体类型 ID；物品商品为空字符串。 */
+    public String entityId() {
+        return entityId;
+    }
+
+    public boolean isEntityProduct() {
+        return !entityId.isBlank();
     }
 
     /** 商品组件的原始 JSON（可为 null）。 */
@@ -218,6 +237,7 @@ public final class Product {
     public Product withMaxStack(int maxStack) {
         if (maxStack == this.maxStack) return this;
         return new Builder(id, itemId)
+                .entityId(entityId)
                 .components(components)
                 .categories(categories)
                 .currency(currency)
@@ -250,9 +270,9 @@ public final class Product {
         return displayName;
     }
 
-    /** 显示名：未配置时回退为物品 ID。 */
+    /** 显示名：未配置时回退为物品 ID 或实体类型 ID。 */
     public String effectiveName() {
-        return displayName == null || displayName.isBlank() ? itemId : displayName;
+        return displayName == null || displayName.isBlank() ? (isEntityProduct() ? entityId : itemId) : displayName;
     }
 
     public String description() {
@@ -269,7 +289,7 @@ public final class Product {
 
     @Override
     public String toString() {
-        return "Product{" + id + " -> " + itemId + ", price=" + unitPrice + "}";
+        return "Product{" + id + " -> " + (isEntityProduct() ? entityId : itemId) + ", price=" + unitPrice + "}";
     }
 
     private static String optString(JsonObject json, String key, String fallback) {
@@ -290,6 +310,7 @@ public final class Product {
     public static final class Builder {
         private final String id;
         private final String itemId;
+        private String entityId = "";
         private JsonElement components;
         private List<String> categories = Collections.emptyList();
         private String currency = CURRENCY_DEFAULT;
@@ -310,6 +331,11 @@ public final class Product {
 
         public Builder components(JsonElement components) {
             this.components = components;
+            return this;
+        }
+
+        public Builder entityId(String entityId) {
+            this.entityId = entityId == null ? "" : entityId;
             return this;
         }
 

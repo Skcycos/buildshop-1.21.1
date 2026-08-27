@@ -67,6 +67,7 @@ public final class BuildShopNetwork {
     public record ProductDto(
             String id,
             String itemId,
+            String entityId,
             String itemExpression,
             String displayName,
             String description,
@@ -85,6 +86,7 @@ public final class BuildShopNetwork {
             return new ProductDto(
                     product.id(),
                     product.itemId(),
+                    product.entityId(),
                     null,
                     product.effectiveName(),
                     product.description() == null ? "" : product.description(),
@@ -102,18 +104,23 @@ public final class BuildShopNetwork {
         }
 
         public ProductDto withItemExpression(String expression) {
-            return new ProductDto(id, itemId, expression, displayName, description, currency, unitPrice,
+            return new ProductDto(id, itemId, entityId, expression, displayName, description, currency, unitPrice,
                     formattedPrice, bulkSize, maxStack, stockMode, stockRemaining, enabled, categories, sort);
         }
 
         public ProductDto withStockRemaining(int remaining) {
-            return new ProductDto(id, itemId, itemExpression, displayName, description, currency, unitPrice,
+            return new ProductDto(id, itemId, entityId, itemExpression, displayName, description, currency, unitPrice,
                     formattedPrice, bulkSize, maxStack, stockMode, remaining, enabled, categories, sort);
+        }
+
+        public boolean isEntityProduct() {
+            return entityId != null && !entityId.isBlank();
         }
 
         void write(FriendlyByteBuf buf) {
             buf.writeUtf(id, MAX_STRING_LENGTH);
             buf.writeUtf(itemId == null ? "" : itemId, MAX_STRING_LENGTH);
+            buf.writeUtf(entityId == null ? "" : entityId, MAX_STRING_LENGTH);
             buf.writeUtf(itemExpression == null ? "" : itemExpression, MAX_STRING_LENGTH * 4);
             buf.writeUtf(displayName == null ? "" : displayName, MAX_STRING_LENGTH);
             buf.writeUtf(description == null ? "" : description, MAX_STRING_LENGTH * 4);
@@ -132,6 +139,7 @@ public final class BuildShopNetwork {
         static ProductDto read(FriendlyByteBuf buf) {
             String id = buf.readUtf(MAX_STRING_LENGTH);
             String itemId = buf.readUtf(MAX_STRING_LENGTH);
+            String entityId = buf.readUtf(MAX_STRING_LENGTH);
             String itemExpression = buf.readUtf(MAX_STRING_LENGTH * 4);
             String displayName = buf.readUtf(MAX_STRING_LENGTH);
             String description = buf.readUtf(MAX_STRING_LENGTH * 4);
@@ -145,7 +153,7 @@ public final class BuildShopNetwork {
             boolean enabled = buf.readBoolean();
             List<String> categories = buf.readList(buffer -> buffer.readUtf(MAX_STRING_LENGTH));
             int sort = buf.readVarInt();
-            return new ProductDto(id, itemId, itemExpression.isEmpty() ? null : itemExpression, displayName,
+            return new ProductDto(id, itemId, entityId, itemExpression.isEmpty() ? null : itemExpression, displayName,
                     description, currency, unitPrice, formattedPrice, bulkSize, maxStack,
                     finite ? StockMode.FINITE : StockMode.INFINITE, stockRemaining, enabled, categories, sort);
         }
