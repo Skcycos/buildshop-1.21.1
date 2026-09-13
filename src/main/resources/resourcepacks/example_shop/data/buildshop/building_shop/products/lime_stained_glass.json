@@ -1,0 +1,13 @@
+{
+  "id": "lime_stained_glass",
+  "item": "minecraft:lime_stained_glass",
+  "categories": ["glass","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "黄绿色染色玻璃",
+  "description": "自然清新的半透明玻璃",
+  "enabled": true,
+  "sort": 1260
+}

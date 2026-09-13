@@ -1,0 +1,13 @@
+{
+  "id": "cobbled_deepslate",
+  "item": "minecraft:cobbled_deepslate",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深板岩圆石",
+  "description": "深层矿洞的粗糙石材",
+  "enabled": true,
+  "sort": 790
+}

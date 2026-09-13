@@ -1,0 +1,13 @@
+{
+  "id": "polished_andesite",
+  "item": "minecraft:polished_andesite",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "磨制安山岩",
+  "description": "适合现代建筑的灰石",
+  "enabled": true,
+  "sort": 760
+}

@@ -1,0 +1,13 @@
+{
+  "id": "jungle_log",
+  "item": "minecraft:jungle_log",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "丛林原木",
+  "description": "纹理鲜明的热带原木",
+  "enabled": true,
+  "sort": 210
+}

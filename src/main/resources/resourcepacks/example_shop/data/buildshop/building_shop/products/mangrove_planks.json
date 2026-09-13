@@ -1,0 +1,13 @@
+{
+  "id": "mangrove_planks",
+  "item": "minecraft:mangrove_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红树木板",
+  "description": "湿地风格的红色木材",
+  "enabled": true,
+  "sort": 150
+}

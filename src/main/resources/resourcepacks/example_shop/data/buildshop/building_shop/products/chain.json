@@ -1,0 +1,13 @@
+{
+  "id": "chain",
+  "item": "minecraft:chain",
+  "categories": ["fence_gate","decoration"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 12,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "铁链",
+  "description": "悬挂灯具与装饰的链条",
+  "enabled": true,
+  "sort": 1420
+}

@@ -1,0 +1,13 @@
+{
+  "id": "smooth_sandstone",
+  "item": "minecraft:smooth_sandstone",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "平滑砂岩",
+  "description": "简洁明亮的砂岩表面",
+  "enabled": true,
+  "sort": 910
+}

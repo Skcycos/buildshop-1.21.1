@@ -1,0 +1,13 @@
+{
+  "id": "cherry_fence",
+  "item": "minecraft:cherry_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "樱花木栅栏",
+  "description": "花园风格的围栏",
+  "enabled": true,
+  "sort": 560
+}

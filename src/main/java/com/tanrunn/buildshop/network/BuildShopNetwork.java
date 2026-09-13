@@ -23,6 +23,7 @@ public final class BuildShopNetwork {
     private static final int MAX_STRING_LENGTH = 256;
     private static final int MAX_PRODUCT_ID_LENGTH = 128;
     private static final int MAX_REQUEST_ID_LENGTH = 64;
+    private static final int MAX_UI_BACKEND_LENGTH = 16;
 
     private BuildShopNetwork() {
         throw new AssertionError();
@@ -161,12 +162,20 @@ public final class BuildShopNetwork {
 
     // ---------------------------------------------------------------- payloads
 
-    /** 服务端 → 客户端：打开商店界面。 */
-    public record OpenShopPayload() implements CustomPacketPayload {
+    /**
+     * 服务端 → 客户端：打开商店界面及该服务器指定的 UI 后端。
+     *
+     * <p>不能依赖 {@code ModConfig.Type.SERVER} 在客户端的加载时机：客户端的
+     * FML 初始化发生在加入世界之前，而商店界面会在收到本包后立即创建。因此后端
+     * 选择必须与打开指令处于同一个包内，才能保证先切换后端、再创建界面。</p>
+     */
+    public record OpenShopPayload(String uiBackend) implements CustomPacketPayload {
         public static final Type<OpenShopPayload> TYPE = new Type<>(id("open_shop"));
         public static final StreamCodec<FriendlyByteBuf, OpenShopPayload> STREAM_CODEC =
-                StreamCodec.ofMember((buf, payload) -> {
-                }, buf -> new OpenShopPayload());
+                StreamCodec.ofMember(
+                        (payload, buf) -> buf.writeUtf(payload.uiBackend() == null ? "aui" : payload.uiBackend(),
+                                MAX_UI_BACKEND_LENGTH),
+                        buf -> new OpenShopPayload(buf.readUtf(MAX_UI_BACKEND_LENGTH)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

@@ -1,0 +1,13 @@
+{
+  "id": "birch_fence",
+  "item": "minecraft:birch_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "白桦木栅栏",
+  "description": "明亮庭院的围栏",
+  "enabled": true,
+  "sort": 510
+}

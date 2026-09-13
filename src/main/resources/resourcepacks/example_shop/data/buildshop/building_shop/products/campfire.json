@@ -1,0 +1,13 @@
+{
+  "id": "campfire",
+  "item": "minecraft:campfire",
+  "categories": ["light","decoration"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 18,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "篝火",
+  "description": "营地与烟囱的生活装饰",
+  "enabled": true,
+  "sort": 1460
+}

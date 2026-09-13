@@ -1,0 +1,13 @@
+{
+  "id": "piston",
+  "item": "minecraft:piston",
+  "categories": ["redstone"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 16,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "活塞",
+  "description": "推动方块的机械装置",
+  "enabled": true,
+  "sort": 1490
+}

@@ -6,7 +6,6 @@ import com.sighs.apricityui.init.Document;
 import com.sighs.apricityui.init.Element;
 import com.sighs.apricityui.screen.ApricityScreen;
 import com.sighs.apricityui.spi.AuiServices;
-import com.sighs.apricityui.slot.ItemStackExpressionCompiler;
 import com.sighs.apricityui.task.FrameTaskScheduler;
 import com.tanrunn.buildshop.BuildShopMod;
 import com.tanrunn.buildshop.core.Category;
@@ -15,15 +14,12 @@ import com.tanrunn.buildshop.core.ItemExpressionUtil;
 import com.tanrunn.buildshop.core.PurchaseMode;
 import com.tanrunn.buildshop.network.BuildShopNetwork.CategoryDto;
 import com.tanrunn.buildshop.network.BuildShopNetwork.ProductDto;
-import com.tanrunn.buildshop.network.BuildShopNetwork.PurchaseRequestPayload;
 import com.tanrunn.buildshop.network.BuildShopNetwork.PurchaseResultPayload;
 import com.tanrunn.buildshop.network.BuildShopNetwork.RequestSyncPayload;
 import com.tanrunn.buildshop.network.BuildShopNetwork.SyncShopPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -33,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * 商店页面 Java 绑定（AUI）。
@@ -49,7 +44,7 @@ public final class ShopScreenController {
     public static final ShopScreenController INSTANCE = new ShopScreenController();
     public static final String TEMPLATE_PATH = "buildingshop/screens/building_shop.html";
 
-    private final ShopClientModel model = new ShopClientModel();
+    private final ClientShopState state = new ClientShopState();
 
     private Document document;
     private long generation;
@@ -57,16 +52,11 @@ public final class ShopScreenController {
     private String searchText = "";
     private String qtyDialogProductId;
     private SortMode sortMode = SortMode.DEFAULT;
-    private final Map<String, PendingPurchase> pendingPurchases = new LinkedHashMap<>();
-
     private ShopScreenController() {
     }
 
     private enum SortMode {
         DEFAULT, PRICE_ASC, PRICE_DESC
-    }
-
-    private record PendingPurchase(ProductDto product) {
     }
 
     // ------------------------------------------------------------------ open
@@ -206,7 +196,7 @@ public final class ShopScreenController {
 
     public void applySync(SyncShopPayload payload) {
         if (payload == null) return;
-        model.applySync(payload);
+        state.applySync(payload);
         if (document == null) return;
         renderAll();
     }
@@ -231,10 +221,16 @@ public final class ShopScreenController {
         Element balance = doc.getElementById("balance");
         Element label = doc.getElementById("balance-label");
         if (balance != null) {
-            balance.setTextContent(model.balance(model.defaultCurrency()));
+            String currency = state.model().defaultCurrency();
+            balance.setTextContent(state.model().currencyAvailable(currency)
+                    ? state.model().balance(currency)
+                    : Component.translatable("buildshop.payment.unknown_currency").getString());
         }
         if (label != null) {
-            String name = model.currencyName(model.defaultCurrency());
+            String currency = state.model().defaultCurrency();
+            String name = state.model().currencyAvailable(currency)
+                    ? state.model().currencyName(currency)
+                    : state.model().compactCurrencyId(currency);
             label.setTextContent(Component.translatable("buildshop.ui.balance.label", name).getString());
         }
     }
@@ -248,14 +244,14 @@ public final class ShopScreenController {
         container.appendChild(createCategoryButton(doc, Category.ALL_ID, allName, null));
 
         Map<String, Integer> productCountByCategory = new HashMap<>();
-        for (ProductDto product : model.products()) {
+        for (ProductDto product : state.model().products()) {
             for (String category : product.categories()) {
                 productCountByCategory.merge(category, 1, Integer::sum);
             }
         }
 
-        for (CategoryDto category : model.categories()) {
-            if (model.hideEmptyCategories() && !productCountByCategory.containsKey(category.id())) {
+        for (CategoryDto category : state.model().categories()) {
+            if (state.model().hideEmptyCategories() && !productCountByCategory.containsKey(category.id())) {
                 continue; // 空分类默认隐藏（配置可关）
             }
             container.appendChild(createCategoryButton(doc, category.id(), category.name(), category.iconExpression()));
@@ -296,7 +292,7 @@ public final class ShopScreenController {
             if (id != null && !id.isBlank()) existing.put(id, child);
         }
 
-        List<ProductDto> ordered = new ArrayList<>(model.products());
+        List<ProductDto> ordered = new ArrayList<>(state.model().products());
         ordered.sort((a, b) -> switch (sortMode) {
             case PRICE_ASC -> Long.compare(a.unitPrice(), b.unitPrice());
             case PRICE_DESC -> Long.compare(b.unitPrice(), a.unitPrice());
@@ -321,7 +317,7 @@ public final class ShopScreenController {
         }
 
         if (countEl != null) {
-            String all = Component.translatable("buildshop.ui.count", visible, model.products().size()).getString();
+            String all = Component.translatable("buildshop.ui.count", visible, state.model().products().size()).getString();
             countEl.setTextContent(all);
         }
 
@@ -388,6 +384,7 @@ public final class ShopScreenController {
     }
 
     private void updateCard(Element card, ProductDto product) {
+        boolean currencyAvailable = state.model().currencyAvailable(product.currency());
         Element icon = card.children.isEmpty() ? null : card.children.get(0);
         if (icon != null) {
             String expression = resolveItemExpression(product);
@@ -410,7 +407,13 @@ public final class ShopScreenController {
             Element price = row.children.isEmpty() ? null : row.children.get(0);
             Element stock = row.children.size() > 1 ? row.children.get(1) : null;
             if (price != null) {
-                price.setTextContent(product.formattedPrice());
+                String currencyText = currencyAvailable
+                        ? state.model().currencyName(product.currency())
+                        : Component.translatable("buildshop.payment.unknown_currency").getString()
+                        + " (" + state.model().compactCurrencyId(product.currency()) + ")";
+                price.setTextContent(currencyAvailable
+                        ? product.formattedPrice()
+                        : product.formattedPrice() + " · " + currencyText);
             }
             if (stock != null) {
                 if (product.stockMode() == com.tanrunn.buildshop.core.StockMode.INFINITE) {
@@ -429,13 +432,17 @@ public final class ShopScreenController {
             state.setTextContent(warning == null ? "" : warning);
             state.setInlineStyleProperty("display", warning == null ? "none" : "block");
         }
-        card.setAttribute("class", "card" + (product.enabled() ? "" : " disabled"));
+        card.setAttribute("class", "card" + (product.enabled() && currencyAvailable ? "" : " disabled"));
     }
 
     /** 余额不足 / 背包空间不足提示（客户端估算，服务端仍是权威）。 */
     private String cardWarning(ProductDto product) {
         if (!product.enabled()) return null;
-        long balance = model.balanceAmount(product.currency());
+        if (!state.model().currencyAvailable(product.currency())) {
+            return Component.translatable("buildshop.payment.unknown_currency").getString()
+                    + " (" + state.model().compactCurrencyId(product.currency()) + ")";
+        }
+        long balance = state.model().balanceAmount(product.currency());
         if (balance < product.unitPrice()) {
             return Component.translatable("buildshop.ui.warn.balance").getString();
         }
@@ -466,32 +473,16 @@ public final class ShopScreenController {
     }
 
     /**
-     * 客户端估算用模板堆叠：优先用 AUI 官方 {@link ItemStackExpressionCompiler} 解析
-     * 服务端同步的完整 SNBT（含自定义组件，如 max_stack_size），保证合并兼容性与
-     * 最大堆叠估算与服务端一致；解析失败回退为注册表默认物品（服务端仍是最终权威）。
+     * 客户端估算用模板堆叠：使用 Minecraft 原生 ItemStack.CODEC 解析服务端同步的完整
+     * SNBT（含自定义组件，如 max_stack_size），保证合并兼容性与最大堆叠估算与服务端
+     * 一致；解析失败回退为注册表默认物品（服务端仍是最终权威）。
      */
     private ItemStack clientTemplate(ProductDto product) {
-        if (product.isEntityProduct()) return ItemStack.EMPTY;
-        if (product.itemExpression() != null && !product.itemExpression().isBlank()) {
-            ItemStack parsed = ItemStackExpressionCompiler.parse(product.itemExpression());
-            if (!parsed.isEmpty()) {
-                return parsed;
-            }
-        }
-        ResourceLocation id = ResourceLocation.tryParse(product.itemId());
-        if (id == null || !BuiltInRegistries.ITEM.containsKey(id)) return ItemStack.EMPTY;
-        return new ItemStack(BuiltInRegistries.ITEM.get(id));
+        return ClientItemStackResolver.resolve(product);
     }
 
     private boolean deliveryAvailable(ProductDto product) {
-        if (product.isEntityProduct()) {
-            if (product.entityId() == null || product.entityId().isBlank()) return false;
-            ResourceLocation id = ResourceLocation.tryParse(product.entityId());
-            return id != null && BuiltInRegistries.ENTITY_TYPE.containsKey(id);
-        }
-        if (product.itemId() == null || product.itemId().isBlank()) return false;
-        ResourceLocation id = ResourceLocation.tryParse(product.itemId());
-        return id != null && BuiltInRegistries.ITEM.containsKey(id);
+        return state.deliveryAvailable(product);
     }
 
     private String resolveItemExpression(ProductDto product) {
@@ -546,6 +537,11 @@ public final class ShopScreenController {
         if (card == null) return;
         String productId = card.getAttribute("data-id");
         if (productId == null) return;
+        ProductDto product = productById(productId);
+        if (product == null || !state.model().currencyAvailable(product.currency())) {
+            showStatus(Component.translatable("buildshop.payment.unknown_currency").getString(), true);
+            return;
+        }
 
         PurchaseMode mode;
         if (event instanceof MouseEvent mouse && mouse.controlKey) {
@@ -565,28 +561,19 @@ public final class ShopScreenController {
         if (productId == null) return;
         ProductDto product = productById(productId);
         if (product == null) return;
+        if (!state.model().currencyAvailable(product.currency())) {
+            showStatus(Component.translatable("buildshop.payment.unknown_currency").getString(), true);
+            return;
+        }
         openQtyDialog(product);
     }
 
     private ProductDto productById(String id) {
-        return model.product(id);
+        return state.model().product(id);
     }
 
     private void sendPurchase(String productId, PurchaseMode mode, int quantity) {
-        String requestId = UUID.randomUUID().toString();
-        ProductDto product = model.product(productId);
-        if (product != null) {
-            pendingPurchases.put(requestId, new PendingPurchase(product));
-            while (pendingPurchases.size() > 32) {
-                pendingPurchases.remove(pendingPurchases.keySet().iterator().next());
-            }
-        }
-        PacketDistributor.sendToServer(new PurchaseRequestPayload(
-                productId,
-                (byte) mode.ordinal(),
-                quantity,
-                requestId
-        ));
+        state.requestPurchase(productId, mode, quantity);
     }
 
     private Element cardFrom(Event event) {
@@ -701,52 +688,24 @@ public final class ShopScreenController {
      */
     public void applyPurchaseResult(PurchaseResultPayload payload) {
         if (payload == null) return;
-        PendingPurchase pending = pendingPurchases.remove(payload.requestId());
-        if (payload.success() && pending != null && payload.quantity() > 0) {
-            ProductDto product = pending.product();
-            long gameTime = Minecraft.getInstance().level == null
-                    ? 0
-                    : Minecraft.getInstance().level.getGameTime();
-            ClientPurchaseHistory.INSTANCE.add(new ClientPurchaseRecord(
-                    gameTime / 24_000L,
-                    gameTime,
-                    product.id(),
-                    product.displayName(),
-                    primaryCategoryName(product),
-                    model.currencyName(product.currency()),
-                    payload.quantity(),
-                    payload.totalPrice()));
-        }
-        model.applyBalanceUpdates(payload.balances(), payload.balanceAmounts());
-        if (payload.stockUpdates() != null) {
-            payload.stockUpdates().forEach(model::applyStockUpdate);
-        }
+        ClientShopState.PurchaseFeedback feedback = state.applyPurchaseResult(payload);
         Document doc = document;
         if (doc != null) {
             renderAll();
         }
 
         String message;
-        if (payload.success()) {
-            message = Component.translatable("buildshop.result.success", payload.quantity(), payload.totalPrice()).getString();
+        if (feedback.success()) {
+            message = Component.translatable("buildshop.result.success", feedback.quantity(), feedback.totalPrice()).getString();
             showStatus(message, false);
         } else {
-            String key = payload.messageKey() == null ? "buildshop.result.unknown" : payload.messageKey();
+            String key = feedback.messageKey();
             message = Component.translatable(key).getString();
             showStatus(message, true);
         }
         if (qtyDialogProductId != null) {
             hideQtyDialog();
         }
-    }
-
-    private String primaryCategoryName(ProductDto product) {
-        if (product.categories().isEmpty()) return "未分类";
-        String id = product.categories().get(0);
-        for (CategoryDto category : model.categories()) {
-            if (category.id().equals(id)) return category.name();
-        }
-        return id;
     }
 
     // ------------------------------------------------------------------ status

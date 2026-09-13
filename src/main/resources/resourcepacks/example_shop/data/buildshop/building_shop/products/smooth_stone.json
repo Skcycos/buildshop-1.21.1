@@ -1,0 +1,13 @@
+{
+  "id": "smooth_stone",
+  "item": "minecraft:smooth_stone",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "平滑石头",
+  "description": "简洁利落的建筑表面",
+  "enabled": true,
+  "sort": 770
+}

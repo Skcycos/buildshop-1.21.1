@@ -1,0 +1,13 @@
+{
+  "id": "packed_mud",
+  "item": "minecraft:packed_mud",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 5,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "泥坯",
+  "description": "压实后的泥土建材",
+  "enabled": true,
+  "sort": 880
+}

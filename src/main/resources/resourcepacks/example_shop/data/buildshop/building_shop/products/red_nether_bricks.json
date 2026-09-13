@@ -1,0 +1,13 @@
+{
+  "id": "red_nether_bricks",
+  "item": "minecraft:red_nether_bricks",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 10,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红色下界砖",
+  "description": "颜色鲜明的下界建材",
+  "enabled": true,
+  "sort": 1030
+}

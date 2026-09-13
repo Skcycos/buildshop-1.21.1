@@ -1,0 +1,13 @@
+{
+  "id": "cherry_planks",
+  "item": "minecraft:cherry_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "樱花木板",
+  "description": "粉色系的温柔木材",
+  "enabled": true,
+  "sort": 160
+}

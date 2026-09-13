@@ -90,6 +90,27 @@ public final class ShopClientModel {
         return currencyNames.getOrDefault(currency, currency);
     }
 
+    /** Returns whether the server advertised a usable provider for this currency. */
+    public boolean currencyAvailable(String currency) {
+        return currency != null && !currency.isBlank() && currencyNames.containsKey(currency);
+    }
+
+    /** Keeps an unknown namespaced id readable in a narrow product card. */
+    public String compactCurrencyId(String currency) {
+        if (currency == null || currency.isBlank()) return "?";
+        String compact = currency;
+        int namespaceSeparator = compact.indexOf(':');
+        if (namespaceSeparator >= 0 && namespaceSeparator + 1 < compact.length()) {
+            compact = compact.substring(namespaceSeparator + 1);
+        }
+        return compact.length() > 14 ? compact.substring(0, 13) + "…" : compact;
+    }
+
+    /** Display name for cards; known providers use their friendly name, unknown ones use a short id. */
+    public String currencyLabel(String currency) {
+        return currencyAvailable(currency) ? currencyName(currency) : compactCurrencyId(currency);
+    }
+
     public String defaultCurrency() {
         return defaultCurrency;
     }

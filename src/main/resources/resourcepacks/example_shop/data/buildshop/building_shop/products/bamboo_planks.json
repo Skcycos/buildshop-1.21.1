@@ -1,0 +1,13 @@
+{
+  "id": "bamboo_planks",
+  "item": "minecraft:bamboo_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "竹板",
+  "description": "轻巧自然的竹制建材",
+  "enabled": true,
+  "sort": 170
+}

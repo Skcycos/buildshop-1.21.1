@@ -1,0 +1,13 @@
+{
+  "id": "warped_stairs",
+  "item": "minecraft:warped_stairs",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "诡异木楼梯",
+  "description": "下界风格的青蓝楼梯",
+  "enabled": true,
+  "sort": 390
+}

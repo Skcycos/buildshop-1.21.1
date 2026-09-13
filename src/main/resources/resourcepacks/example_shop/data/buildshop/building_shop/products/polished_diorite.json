@@ -1,0 +1,13 @@
+{
+  "id": "polished_diorite",
+  "item": "minecraft:polished_diorite",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "磨制闪长岩",
+  "description": "明亮规整的装饰石材",
+  "enabled": true,
+  "sort": 740
+}

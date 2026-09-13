@@ -1,0 +1,13 @@
+{
+  "id": "calcite",
+  "item": "minecraft:calcite",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 8,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "方解石",
+  "description": "洁白细腻的洞穴石材",
+  "enabled": true,
+  "sort": 840
+}

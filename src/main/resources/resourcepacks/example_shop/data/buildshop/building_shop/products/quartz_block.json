@@ -1,0 +1,13 @@
+{
+  "id": "quartz_block",
+  "item": "minecraft:quartz_block",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 18,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "石英块",
+  "description": "洁白现代的高级建材",
+  "enabled": true,
+  "sort": 960
+}

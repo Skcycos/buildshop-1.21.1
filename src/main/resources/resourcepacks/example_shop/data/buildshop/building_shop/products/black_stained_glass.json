@@ -1,0 +1,13 @@
+{
+  "id": "black_stained_glass",
+  "item": "minecraft:black_stained_glass",
+  "categories": ["glass","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "黑色染色玻璃",
+  "description": "深色神秘的半透明玻璃",
+  "enabled": true,
+  "sort": 1360
+}

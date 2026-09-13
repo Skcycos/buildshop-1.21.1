@@ -1,0 +1,13 @@
+{
+  "id": "birch_planks",
+  "item": "minecraft:birch_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "白桦木板",
+  "description": "明亮清爽的基础木材",
+  "enabled": true,
+  "sort": 110
+}

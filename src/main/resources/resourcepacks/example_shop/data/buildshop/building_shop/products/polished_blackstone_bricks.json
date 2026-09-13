@@ -1,0 +1,13 @@
+{
+  "id": "polished_blackstone_bricks",
+  "item": "minecraft:polished_blackstone_bricks",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 10,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "磨制黑石砖",
+  "description": "精致厚重的黑色砖石",
+  "enabled": true,
+  "sort": 1080
+}

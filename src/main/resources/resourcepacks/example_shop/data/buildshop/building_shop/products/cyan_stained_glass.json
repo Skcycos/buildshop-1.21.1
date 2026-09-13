@@ -1,0 +1,13 @@
+{
+  "id": "cyan_stained_glass",
+  "item": "minecraft:cyan_stained_glass",
+  "categories": ["glass","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "青色染色玻璃",
+  "description": "清凉通透的半透明玻璃",
+  "enabled": true,
+  "sort": 1300
+}

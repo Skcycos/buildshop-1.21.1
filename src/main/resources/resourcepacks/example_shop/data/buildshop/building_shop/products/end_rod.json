@@ -1,0 +1,13 @@
+{
+  "id": "end_rod",
+  "item": "minecraft:end_rod",
+  "categories": ["light","decoration"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 22,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "末地烛",
+  "description": "简洁明亮的现代光源",
+  "enabled": true,
+  "sort": 1480
+}

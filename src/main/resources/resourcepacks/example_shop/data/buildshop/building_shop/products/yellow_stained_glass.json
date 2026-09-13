@@ -1,0 +1,13 @@
+{
+  "id": "yellow_stained_glass",
+  "item": "minecraft:yellow_stained_glass",
+  "categories": ["glass","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "黄色染色玻璃",
+  "description": "明亮活泼的半透明玻璃",
+  "enabled": true,
+  "sort": 1250
+}

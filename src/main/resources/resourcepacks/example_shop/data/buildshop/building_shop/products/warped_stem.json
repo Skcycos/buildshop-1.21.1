@@ -1,0 +1,13 @@
+{
+  "id": "warped_stem",
+  "item": "minecraft:warped_stem",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "诡异菌柄",
+  "description": "下界诡异森林的菌柄",
+  "enabled": true,
+  "sort": 270
+}

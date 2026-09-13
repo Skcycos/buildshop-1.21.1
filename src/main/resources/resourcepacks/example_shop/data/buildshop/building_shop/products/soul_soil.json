@@ -1,0 +1,13 @@
+{
+  "id": "soul_soil",
+  "item": "minecraft:soul_soil",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 8,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "灵魂土",
+  "description": "灵魂沙谷的暗色土壤",
+  "enabled": true,
+  "sort": 1050
+}

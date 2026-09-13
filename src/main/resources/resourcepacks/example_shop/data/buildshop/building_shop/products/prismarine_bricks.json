@@ -1,0 +1,13 @@
+{
+  "id": "prismarine_bricks",
+  "item": "minecraft:prismarine_bricks",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 15,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "海晶石砖",
+  "description": "细密规整的海洋建材",
+  "enabled": true,
+  "sort": 1140
+}

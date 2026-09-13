@@ -1,0 +1,13 @@
+{
+  "id": "cut_sandstone",
+  "item": "minecraft:cut_sandstone",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 5,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "切制砂岩",
+  "description": "规整的砂岩装饰纹理",
+  "enabled": true,
+  "sort": 920
+}

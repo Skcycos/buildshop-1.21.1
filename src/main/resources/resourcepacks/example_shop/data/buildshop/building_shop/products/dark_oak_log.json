@@ -1,0 +1,13 @@
+{
+  "id": "dark_oak_log",
+  "item": "minecraft:dark_oak_log",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深色橡木原木",
+  "description": "颜色深沉的坚固原木",
+  "enabled": true,
+  "sort": 230
+}

@@ -1,0 +1,13 @@
+{
+  "id": "end_stone_bricks",
+  "item": "minecraft:end_stone_bricks",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 10,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "末地石砖",
+  "description": "末地建筑的规整砖石",
+  "enabled": true,
+  "sort": 1000
+}

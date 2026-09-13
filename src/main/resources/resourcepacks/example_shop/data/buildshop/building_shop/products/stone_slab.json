@@ -1,0 +1,13 @@
+{
+  "id": "stone_slab",
+  "item": "minecraft:stone_slab",
+  "categories": ["stairs_slabs","stone"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "石台阶",
+  "description": "基础石材的半砖构件",
+  "enabled": true,
+  "sort": 780
+}

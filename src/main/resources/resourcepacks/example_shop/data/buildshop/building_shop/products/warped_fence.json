@@ -1,0 +1,13 @@
+{
+  "id": "warped_fence",
+  "item": "minecraft:warped_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "诡异木栅栏",
+  "description": "下界风格的青蓝围栏",
+  "enabled": true,
+  "sort": 590
+}

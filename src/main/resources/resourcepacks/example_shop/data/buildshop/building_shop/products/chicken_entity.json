@@ -1,0 +1,13 @@
+{
+  "id": "chicken_entity",
+  "entity": "minecraft:chicken",
+  "categories": ["other"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 15,
+  "bulkSize": 1,
+  "stock": { "mode": "infinite" },
+  "displayName": "鸡",
+  "description": "购买后在玩家附近生成一只鸡",
+  "enabled": true,
+  "sort": 3
+}

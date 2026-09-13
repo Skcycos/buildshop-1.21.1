@@ -145,7 +145,19 @@
 
         #purchase-records { min-height: 0; flex: 1 1 auto; overflow: hidden; padding-top: 10px; }
         .record-row { display: flex; align-items: center; gap: 11px; min-height: 57px; padding: 8px 0; border-bottom: 1px solid var(--paper-deep); }
-        .record-marker { width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 30px; color: var(--white); background: var(--red); font-weight: 700; }
+        .record-marker {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 30px;
+            color: var(--white);
+            background: var(--red);
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+        }
         .record-copy { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
         .record-copy strong { overflow: hidden; color: var(--jade-dark); text-overflow: ellipsis; white-space: nowrap; }
         .record-copy span { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -154,7 +166,17 @@
         .record-amount span { color: var(--red); font-size: 11px; }
         .dashboard-empty { padding: 32px 10px; color: var(--muted); text-align: center; }
 
-        .footer { flex: 0 0 auto; padding-top: 12px; color: var(--muted); font-size: 11px; }
+        .footer {
+            flex: 0 0 auto;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            margin-top: 14px;
+            padding: 0 17px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.4;
+        }
 
         @media (max-width: 900px) {
             .dashboard-shell { padding: 16px; }

@@ -1,0 +1,13 @@
+{
+  "id": "acacia_fence",
+  "item": "minecraft:acacia_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "金合欢木栅栏",
+  "description": "暖色庭院的围栏",
+  "enabled": true,
+  "sort": 530
+}

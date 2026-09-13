@@ -1,0 +1,13 @@
+{
+  "id": "mud_bricks",
+  "item": "minecraft:mud_bricks",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 6,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "泥砖",
+  "description": "温暖朴素的砖石建材",
+  "enabled": true,
+  "sort": 890
+}

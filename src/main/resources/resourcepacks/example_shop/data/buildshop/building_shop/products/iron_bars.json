@@ -1,0 +1,13 @@
+{
+  "id": "iron_bars",
+  "item": "minecraft:iron_bars",
+  "categories": ["fence_gate","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 8,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "铁栏杆",
+  "description": "工业风格的透空围栏",
+  "enabled": true,
+  "sort": 1410
+}

@@ -1,0 +1,13 @@
+{
+  "id": "mud",
+  "item": "minecraft:mud",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "泥巴",
+  "description": "乡野建筑的自然材料",
+  "enabled": true,
+  "sort": 870
+}

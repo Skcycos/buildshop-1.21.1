@@ -1,0 +1,13 @@
+{
+  "id": "mangrove_log",
+  "item": "minecraft:mangrove_log",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红树原木",
+  "description": "湿地树木的厚实原木",
+  "enabled": true,
+  "sort": 240
+}

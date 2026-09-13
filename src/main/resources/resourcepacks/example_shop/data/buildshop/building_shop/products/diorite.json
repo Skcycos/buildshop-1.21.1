@@ -1,0 +1,13 @@
+{
+  "id": "diorite",
+  "item": "minecraft:diorite",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "闪长岩",
+  "description": "浅色颗粒质感石材",
+  "enabled": true,
+  "sort": 730
+}

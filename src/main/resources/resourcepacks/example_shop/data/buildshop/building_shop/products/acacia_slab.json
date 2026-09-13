@@ -1,0 +1,13 @@
+{
+  "id": "acacia_slab",
+  "item": "minecraft:acacia_slab",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "金合欢木台阶",
+  "description": "橙色木材的半砖构件",
+  "enabled": true,
+  "sort": 430
+}

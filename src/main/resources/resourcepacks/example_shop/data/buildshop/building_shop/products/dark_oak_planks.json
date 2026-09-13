@@ -1,0 +1,13 @@
+{
+  "id": "dark_oak_planks",
+  "item": "minecraft:dark_oak_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深色橡木板",
+  "description": "沉稳厚重的深色木材",
+  "enabled": true,
+  "sort": 140
+}

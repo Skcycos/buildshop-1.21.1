@@ -1,0 +1,13 @@
+{
+  "id": "jungle_planks",
+  "item": "minecraft:jungle_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "丛林木板",
+  "description": "适合热带风格建筑",
+  "enabled": true,
+  "sort": 120
+}

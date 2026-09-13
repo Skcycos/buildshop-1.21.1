@@ -1,0 +1,13 @@
+{
+  "id": "mangrove_stairs",
+  "item": "minecraft:mangrove_stairs",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红树木楼梯",
+  "description": "湿地建筑的楼梯构件",
+  "enabled": true,
+  "sort": 350
+}

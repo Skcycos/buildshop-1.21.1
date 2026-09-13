@@ -1,0 +1,13 @@
+{
+  "id": "pig_entity",
+  "entity": "minecraft:pig",
+  "categories": ["other"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 20,
+  "bulkSize": 1,
+  "stock": { "mode": "infinite" },
+  "displayName": "猪",
+  "description": "购买后在玩家附近生成一头猪",
+  "enabled": true,
+  "sort": 2
+}

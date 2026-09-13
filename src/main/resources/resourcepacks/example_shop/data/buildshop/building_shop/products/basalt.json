@@ -1,0 +1,13 @@
+{
+  "id": "basalt",
+  "item": "minecraft:basalt",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 6,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "玄武岩",
+  "description": "下界柱状纹理石材",
+  "enabled": true,
+  "sort": 1090
+}

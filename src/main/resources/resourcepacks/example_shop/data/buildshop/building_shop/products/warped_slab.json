@@ -1,0 +1,13 @@
+{
+  "id": "warped_slab",
+  "item": "minecraft:warped_slab",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "诡异木台阶",
+  "description": "青蓝下界木材的半砖构件",
+  "enabled": true,
+  "sort": 490
+}

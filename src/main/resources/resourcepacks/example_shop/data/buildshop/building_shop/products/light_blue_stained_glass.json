@@ -1,0 +1,13 @@
+{
+  "id": "light_blue_stained_glass",
+  "item": "minecraft:light_blue_stained_glass",
+  "categories": ["glass","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "淡蓝色染色玻璃",
+  "description": "清新的天空色玻璃",
+  "enabled": true,
+  "sort": 1240
+}

@@ -49,8 +49,11 @@ public class BuildShopMod {
         // 注册内置示例 datapack（由资源配置决定是否启用）
         modEventBus.addListener(this::addPackFinders);
 
-        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        // Register gameplay settings as common config and the server-owned UI selection as
+        // server config. ShopServer includes the latter in OpenShopPayload so the client can
+        // apply the owner's choice before constructing the screen.
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON_SPEC);
+        modContainer.registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -84,7 +87,9 @@ public class BuildShopMod {
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(BuildShopNetwork.CHANNEL)
-                .versioned("1")
+                // OpenShopPayload now carries the server-selected UI backend; an older client
+                // must not try to decode this payload with the former empty-payload codec.
+                .versioned("2")
                 .optional();
         BuildShopNetwork.register(registrar);
         LOGGER.info("Registered {} network payloads", BuildShopNetwork.class.getSimpleName());

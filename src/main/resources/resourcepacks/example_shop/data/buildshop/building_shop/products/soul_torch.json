@@ -1,0 +1,13 @@
+{
+  "id": "soul_torch",
+  "item": "minecraft:soul_torch",
+  "categories": ["light"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "灵魂火把",
+  "description": "散发幽蓝光芒的火把",
+  "enabled": true,
+  "sort": 1440
+}

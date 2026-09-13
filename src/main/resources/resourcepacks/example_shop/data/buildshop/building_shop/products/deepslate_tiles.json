@@ -1,0 +1,13 @@
+{
+  "id": "deepslate_tiles",
+  "item": "minecraft:deepslate_tiles",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深板岩瓦",
+  "description": "细密纹理的深色建材",
+  "enabled": true,
+  "sort": 810
+}

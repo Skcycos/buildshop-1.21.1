@@ -1,0 +1,13 @@
+{
+  "id": "tuff_bricks",
+  "item": "minecraft:tuff_bricks",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 6,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "凝灰岩砖",
+  "description": "适合古朴建筑的砖石",
+  "enabled": true,
+  "sort": 860
+}

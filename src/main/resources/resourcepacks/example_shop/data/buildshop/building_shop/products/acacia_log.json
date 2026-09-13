@@ -1,0 +1,13 @@
+{
+  "id": "acacia_log",
+  "item": "minecraft:acacia_log",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "金合欢原木",
+  "description": "暖色调的天然原木",
+  "enabled": true,
+  "sort": 220
+}

@@ -1,0 +1,13 @@
+{
+  "id": "pink_stained_glass",
+  "item": "minecraft:pink_stained_glass",
+  "categories": ["glass","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 7,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "粉红色染色玻璃",
+  "description": "柔和浪漫的半透明玻璃",
+  "enabled": true,
+  "sort": 1270
+}

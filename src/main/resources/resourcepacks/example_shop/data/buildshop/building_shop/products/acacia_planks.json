@@ -1,0 +1,13 @@
+{
+  "id": "acacia_planks",
+  "item": "minecraft:acacia_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "金合欢木板",
+  "description": "橙色调的特色木材",
+  "enabled": true,
+  "sort": 130
+}

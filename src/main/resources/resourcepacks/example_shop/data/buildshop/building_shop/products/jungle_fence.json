@@ -1,0 +1,13 @@
+{
+  "id": "jungle_fence",
+  "item": "minecraft:jungle_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "丛林木栅栏",
+  "description": "热带庭院的围栏",
+  "enabled": true,
+  "sort": 520
+}

@@ -1,0 +1,13 @@
+{
+  "id": "polished_deepslate",
+  "item": "minecraft:polished_deepslate",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 6,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "磨制深板岩",
+  "description": "深色而整洁的石材",
+  "enabled": true,
+  "sort": 800
+}

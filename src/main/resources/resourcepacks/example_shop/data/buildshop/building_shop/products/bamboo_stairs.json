@@ -1,0 +1,13 @@
+{
+  "id": "bamboo_stairs",
+  "item": "minecraft:bamboo_stairs",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "竹楼梯",
+  "description": "自然风格的轻巧楼梯",
+  "enabled": true,
+  "sort": 370
+}

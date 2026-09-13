@@ -1,0 +1,13 @@
+{
+  "id": "polished_granite",
+  "item": "minecraft:polished_granite",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "磨制花岗岩",
+  "description": "光滑温暖的装饰石材",
+  "enabled": true,
+  "sort": 720
+}

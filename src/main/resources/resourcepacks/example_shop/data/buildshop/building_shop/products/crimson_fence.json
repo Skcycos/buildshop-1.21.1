@@ -1,0 +1,13 @@
+{
+  "id": "crimson_fence",
+  "item": "minecraft:crimson_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "绯红木栅栏",
+  "description": "下界风格的暗红围栏",
+  "enabled": true,
+  "sort": 580
+}

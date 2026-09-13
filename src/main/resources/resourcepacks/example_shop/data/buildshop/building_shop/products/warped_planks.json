@@ -1,0 +1,13 @@
+{
+  "id": "warped_planks",
+  "item": "minecraft:warped_planks",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "诡异木板",
+  "description": "来自下界的青蓝木材",
+  "enabled": true,
+  "sort": 190
+}

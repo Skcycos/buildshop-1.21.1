@@ -1,0 +1,13 @@
+{
+  "id": "red_sandstone",
+  "item": "minecraft:red_sandstone",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "红砂岩",
+  "description": "带有暖色调的砂岩",
+  "enabled": true,
+  "sort": 930
+}

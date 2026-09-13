@@ -1,0 +1,13 @@
+{
+  "id": "dark_oak_slab",
+  "item": "minecraft:dark_oak_slab",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深色橡木台阶",
+  "description": "深色木材的半砖构件",
+  "enabled": true,
+  "sort": 440
+}

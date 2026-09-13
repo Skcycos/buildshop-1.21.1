@@ -1,0 +1,13 @@
+{
+  "id": "tuff",
+  "item": "minecraft:tuff",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "凝灰岩",
+  "description": "带有柔和颗粒的灰色石材",
+  "enabled": true,
+  "sort": 850
+}

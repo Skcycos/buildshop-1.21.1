@@ -1,0 +1,13 @@
+{
+  "id": "crimson_stairs",
+  "item": "minecraft:crimson_stairs",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "绯红木楼梯",
+  "description": "下界风格的暗红楼梯",
+  "enabled": true,
+  "sort": 380
+}

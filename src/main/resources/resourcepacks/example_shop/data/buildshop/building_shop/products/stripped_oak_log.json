@@ -1,0 +1,13 @@
+{
+  "id": "stripped_oak_log",
+  "item": "minecraft:stripped_oak_log",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "去皮橡木原木",
+  "description": "适合做明亮结构的去皮原木",
+  "enabled": true,
+  "sort": 280
+}

@@ -1,0 +1,13 @@
+{
+  "id": "crying_obsidian",
+  "item": "minecraft:crying_obsidian",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 45,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "哭泣的黑曜石",
+  "description": "带有紫色光泽的神秘石材",
+  "enabled": true,
+  "sort": 1120
+}

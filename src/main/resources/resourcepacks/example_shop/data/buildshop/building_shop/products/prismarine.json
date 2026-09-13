@@ -1,0 +1,13 @@
+{
+  "id": "prismarine",
+  "item": "minecraft:prismarine",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 12,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "海晶石",
+  "description": "海洋遗迹风格的蓝绿色石材",
+  "enabled": true,
+  "sort": 1130
+}

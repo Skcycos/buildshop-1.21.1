@@ -32,6 +32,10 @@ repositories {
     maven {
         url "https://maven.sighs.cc/repository/maven-public/"
     }
+    // LDLib2 publishes its NeoForge artifacts to the official FirstDark snapshots Maven.
+    maven {
+        url "https://maven.firstdark.dev/snapshots"
+    }
 }
 
 base {
@@ -126,13 +130,13 @@ configurations {
 }
 
 dependencies {
-    // ApricityUI 硬依赖（NeoForge 1.21.1）——UI 全部由 AUI 渲染。
-    // 服务端 dev 运行（./gradlew runServer -PserverOnly）不需要 AUI（客户端专属），
-    // 此时降级为 compileOnly 避免 AUI 在专用服务器上被加载。
-    if (project.hasProperty('serverOnly')) {
-        compileOnly "com.sighs:ApricityUI-neoforge-1.21.1:1.2.3.1"
-    } else {
-        implementation "com.sighs:ApricityUI-neoforge-1.21.1:1.2.3.1"
+    // 两套 UI 库都只在客户端可选加载。共享/服务端代码不能引用它们的类型，
+    // 具体实现由反射隔离；localRuntime 仅用于本地客户端开发，不会打进生产包。
+    compileOnly "com.sighs:ApricityUI-neoforge-1.21.1:1.2.4-hotfix"
+    compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}:all"
+    if (!project.hasProperty('serverOnly')) {
+        localRuntime "com.sighs:ApricityUI-neoforge-1.21.1:1.2.4-hotfix"
+        localRuntime "com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}:all"
     }
 
     // Unit tests for pure logic
@@ -155,6 +159,7 @@ test {
 // 在测试环境加载会失败（与 runServer 的 serverOnly 处理同理），测试运行时排除它。
 configurations.testRuntimeClasspath {
     exclude group: 'com.sighs', module: 'ApricityUI-neoforge-1.21.1'
+    exclude group: 'com.lowdragmc.ldlib2', module: "ldlib2-neoforge-${minecraft_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -169,6 +174,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
+            ldlib2_version_range   : ldlib2_version_range,
     ]
     inputs.properties replaceProperties
     expand replaceProperties
@@ -207,13 +213,13 @@ idea {
     }
 }
 
-// ApricityUI 是客户端 mod：dev 环境的 runServer 会把 AUI 放进运行时 classpath 导致专用服务器加载失败。
-// prepareServerRun 之后移除 run/mods 中的 AUI jar（生产服务器不会发生同步，无影响）。
+// ApricityUI 和 LDLib2 都是客户端 mod：dev 环境的 runServer 会把可选库放进运行时
+// classpath，prepareServerRun 之后将它们从 run/mods 移除，避免专用服务器加载客户端类。
 tasks.named('prepareServerRun').configure {
     def modsDir = layout.projectDirectory.dir('run/mods').asFile
     doLast {
         modsDir.listFiles()?.each { f ->
-            if (f.name.startsWith('ApricityUI-')) {
+            if (f.name.startsWith('ApricityUI-') || f.name.startsWith('ldlib2-')) {
                 f.delete()
             }
         }

@@ -1,6 +1,6 @@
 # 建筑商店 · Building Shop
 
-一个面向建筑玩家的 Minecraft 建材商店 Mod。商品目录由数据包驱动，购买流程由服务端权威处理，客户端使用 ApricityUI 渲染中式风格商店界面。
+一个面向建筑玩家的 Minecraft 建材商店 Mod。商品目录由数据包驱动，购买流程由服务端权威处理，客户端 UI 可在 ApricityUI（AUI）与 LDLib2 之间选择。
 
 ## 项目状态
 
@@ -29,7 +29,8 @@
 - Java `21`
 - Mod ID：`buildshop`
 - 主包：`com.tanrunn.buildshop`
-- ApricityUI：`1.2.1`，客户端 UI 硬依赖
+- ApricityUI（AUI）：`1.2.4-hotfix`，可选客户端 UI 后端
+- LDLib2：`2.2.26`，可选客户端 UI 后端
 
 ## 开发环境
 
@@ -49,7 +50,15 @@
 ./gradlew runServer -PserverOnly
 ```
 
-`serverOnly` 会让开发环境中的 ApricityUI 变为 `compileOnly`，避免客户端 UI Mod 被专用服务端加载。生产服务端只安装本 Mod 即可，客户端需要安装 ApricityUI。
+两套 UI 库都是可选客户端依赖。生产服务端只安装本 Mod 即可；客户端安装 AUI 或 LDLib2 至少一套即可打开商店。开发环境的 `localRuntime` 会同时加载两套库，`serverOnly` 会移除它们，避免客户端 UI Mod 被专用服务端加载。
+
+服务器统一控制 UI 后端的配置文件是 `world/serverconfig/buildshop-server.toml`：
+
+```toml
+uiBackend = "aui" # 可选：aui 或 ldlib2
+```
+
+修改后重启服务器并重新连接。客户端会优先使用配置指定的后端；如果指定库未安装，会自动回退到另一套已安装的库。两套库都未安装时仍不会崩溃，而是显示可关闭的原版错误界面。主商店和购买看板都会使用同一后端。
 
 > ⚠️ **部署拓扑说明（ApricityUI 上游修复已提交，合入后不再受限）**
 >
@@ -170,6 +179,13 @@ src/main/resources/assets/apricityui/apricity/buildingshop/screens/building_shop
 buildingshop/screens/building_shop.html
 ```
 
+AUI 页面和 LDLib2 原生页面是两个独立后端：
+
+- AUI 使用 `building_shop.html` 与 `purchase_dashboard.html`，保留现有中式纸张风格和 autoReload 调试流程。
+- LDLib2 使用 `ModularUIScreen`，商品列表使用 `VirtualScrollerView` 按行虚拟化，适合 150 个以上商品；购买看板提供累计支出、购买数量、近七日支出、分类支出和购买记录。
+- 两套后端共用现有自定义网络协议、服务端购买逻辑、余额/库存同步和客户端购买历史，不使用 LDLib2 Menu/RPC 替换服务端协议。
+- 商品图标由服务端同步完整 `ItemStack` SNBT，客户端使用原生 `ItemStack.CODEC` 解析；生物商品仍使用对应生物蛋，没有生物蛋时两个后端都留空图标。
+
 开发环境会将页面镜像到 `run/apricity/buildingshop/`，配合 ApricityUI 的 `autoReload` 可以在游戏中调试样式。
 
 商店布局说明：`.layout` 使用两列 grid 并显式声明行高（`grid-template-rows: minmax(0, 1fr)`）；商品网格 `.grid` 使用确定高度（`height: calc(100vh - 320px)`）与 `overflow-y: auto` 形成内部滚动，不依赖 ApricityUI 的 fr/剩余空间传递（相关上游限制见 [AUI_FLEX_FR_LAYOUT_ISSUE.md](docs/AUI_FLEX_FR_LAYOUT_ISSUE.md)）。
@@ -179,7 +195,7 @@ buildingshop/screens/building_shop.html
 ```text
 src/main/java/com/tanrunn/buildshop/
 ├── api/        对外 API 与货币接口
-├── client/     客户端 UI 绑定
+├── client/     客户端状态、UI 后端选择与两套 UI 绑定
 ├── core/       无 Minecraft 依赖的商品与购买逻辑
 ├── network/    客户端与服务端同步、购买请求
 └── server/     数据包、库存、货币和命令集成
@@ -190,6 +206,8 @@ src/main/resources/
 ```
 
 ## 测试
+
+LDLib2 接入细节、依赖坐标和第三套 UI 后端扩展方式见 [LDLIB2_UI_INTEGRATION.md](docs/LDLIB2_UI_INTEGRATION.md)。
 
 运行全部单元测试：
 

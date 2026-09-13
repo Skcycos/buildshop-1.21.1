@@ -1,0 +1,13 @@
+{
+  "id": "candle",
+  "item": "minecraft:candle",
+  "categories": ["light","decoration"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 6,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "蜡烛",
+  "description": "小巧温馨的桌面光源",
+  "enabled": true,
+  "sort": 1470
+}

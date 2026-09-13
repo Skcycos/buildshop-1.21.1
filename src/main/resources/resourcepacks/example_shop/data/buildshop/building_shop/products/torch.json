@@ -1,0 +1,13 @@
+{
+  "id": "torch",
+  "item": "minecraft:torch",
+  "categories": ["light"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "火把",
+  "description": "最实用的基础光源",
+  "enabled": true,
+  "sort": 1430
+}

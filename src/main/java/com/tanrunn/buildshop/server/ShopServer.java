@@ -309,7 +309,8 @@ public final class ShopServer {
         if (!isReachable(player, BuildShopNetwork.OpenShopPayload.TYPE)) {
             return false;
         }
-        PacketDistributor.sendToPlayer(player, new BuildShopNetwork.OpenShopPayload());
+        // SERVER 配置不会在客户端 UI 初始化前可靠可用，因此将选择随打开指令明确下发。
+        PacketDistributor.sendToPlayer(player, new BuildShopNetwork.OpenShopPayload(Config.UI_BACKEND.get()));
         return true;
     }
 

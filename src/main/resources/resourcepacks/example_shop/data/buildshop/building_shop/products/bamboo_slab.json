@@ -1,0 +1,13 @@
+{
+  "id": "bamboo_slab",
+  "item": "minecraft:bamboo_slab",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 2,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "竹台阶",
+  "description": "竹制建筑的半砖构件",
+  "enabled": true,
+  "sort": 470
+}

@@ -1,0 +1,13 @@
+{
+  "id": "crimson_stem",
+  "item": "minecraft:crimson_stem",
+  "categories": ["wood","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "绯红菌柄",
+  "description": "下界绯红森林的菌柄",
+  "enabled": true,
+  "sort": 260
+}

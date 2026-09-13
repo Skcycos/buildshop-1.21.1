@@ -1,0 +1,13 @@
+{
+  "id": "jungle_stairs",
+  "item": "minecraft:jungle_stairs",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "丛林木楼梯",
+  "description": "热带建筑的层次构件",
+  "enabled": true,
+  "sort": 320
+}

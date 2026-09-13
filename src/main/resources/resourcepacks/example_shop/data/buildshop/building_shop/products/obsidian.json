@@ -1,0 +1,13 @@
+{
+  "id": "obsidian",
+  "item": "minecraft:obsidian",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 35,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "黑曜石",
+  "description": "坚硬耐久的深色方块",
+  "enabled": true,
+  "sort": 1110
+}

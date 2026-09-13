@@ -1,0 +1,13 @@
+{
+  "id": "cherry_stairs",
+  "item": "minecraft:cherry_stairs",
+  "categories": ["stairs_slabs","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "樱花木楼梯",
+  "description": "粉色建筑的柔和细节",
+  "enabled": true,
+  "sort": 360
+}

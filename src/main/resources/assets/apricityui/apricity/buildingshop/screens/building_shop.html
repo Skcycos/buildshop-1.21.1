@@ -87,11 +87,14 @@
 
         .brand-mark {
             position: relative;
-            display: grid;
-            place-items: center;
+            /* AUI 对 grid 的 place-items 不会居中文字节点；使用 flex 保证印章字居中。 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 58px;
             height: 58px;
             flex: 0 0 58px;
+            text-align: center;
             color: #fff9ed;
             background: var(--cinnabar);
             border: 3px solid var(--cinnabar-dark);
@@ -527,7 +530,9 @@
             border-top: 3px solid var(--jade);
             box-shadow: 3px 3px 0 var(--shadow);
             cursor: pointer;
+            /* AUI 当前悬停动画会造成商品网格掉帧；上游修复后再恢复。
             transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+            */
         }
 
         .card::before {
@@ -542,13 +547,17 @@
             pointer-events: none;
         }
 
+        /* AUI 当前悬停状态会造成商品网格掉帧，并把卡片边框变成浅灰色；上游修复后再恢复。
         .card:hover {
-            transform: translateY(-2px);
             border-color: #9eb9a9;
+            transform: translateY(-2px);
             box-shadow: 4px 5px 0 rgba(75, 56, 33, 0.15);
         }
+        */
 
+        /* AUI 当前悬停/按压位移动画会造成商品网格掉帧；上游修复后再恢复。
         .card:active { transform: translate(1px, 1px); }
+        */
         .card.disabled { opacity: 0.5; cursor: not-allowed; }
 
         .card-icon {

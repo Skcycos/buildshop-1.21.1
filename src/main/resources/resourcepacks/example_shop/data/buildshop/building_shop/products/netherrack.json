@@ -1,0 +1,13 @@
+{
+  "id": "netherrack",
+  "item": "minecraft:netherrack",
+  "categories": ["stone","building"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 3,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "下界岩",
+  "description": "下界常见的红色岩石",
+  "enabled": true,
+  "sort": 1010
+}

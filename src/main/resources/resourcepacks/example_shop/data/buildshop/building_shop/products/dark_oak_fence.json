@@ -1,0 +1,13 @@
+{
+  "id": "dark_oak_fence",
+  "item": "minecraft:dark_oak_fence",
+  "categories": ["fence_gate","wood"],
+  "currency": "server_menu:lc_bank_main",
+  "unitPrice": 4,
+  "bulkSize": 64,
+  "stock": { "mode": "infinite" },
+  "displayName": "深色橡木栅栏",
+  "description": "深色建筑的围栏",
+  "enabled": true,
+  "sort": 540
+}
